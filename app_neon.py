@@ -5851,13 +5851,12 @@ def obtenir_paiements_json(id_inv):
 #--------------------------------------------------------
 # APPLICATION SECURE INITIALIZATION & RUN
 # -------------------------------------------------------
-if __name__ == "__main__":
-    with app.app_context():
-        # Création initiale des tables dans Neon si elles n'existent pas.
-        # NE PAS utiliser db.drop_all() en production
-        db.create_all()
+# Mettez ces lignes alignées tout à gauche (sans espace devant) :
+with app.app_context():
+    # Création initiale des tables dans Neon si elles n'existent pas.
+    db.create_all()
 
-    # Compatible avec Render et avec l'exécution locale.
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
     app.run(debug=debug, host="0.0.0.0", port=port)
