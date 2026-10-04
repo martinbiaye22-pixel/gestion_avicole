@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi de la Production d'Œufs - PROMAS</title>
+<style>
+body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+.container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+.header-block { border-bottom: 2px solid #9b59b6; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+h2 { color: #1e2229; margin: 0; font-size: 22px; }
+.btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+.btn-back:hover { background-color: #6c7a7d; }
+.form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+.form-group { display: flex; flex-direction: column; }
+label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+.btn-submit { background-color: #9b59b6; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 4; transition: background 0.2s; }
+.btn-submit:hover { background-color: #8e44ad; }
+.btn-edit-mode { background-color: #3498db !important; }
+.btn-edit-mode:hover { background-color: #2980b9 !important; }
+.btn-cancel { display: none; background-color: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; grid-column: span 4; margin-top: -5px; }
+.filter-print-zone { display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; }
+.filter-box { display: flex; align-items: center; gap: 20px; }
+.btn-print { background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-print:hover { background-color: #11151c; }
+
+/* 🛠️ COMPACTAGE ET LARGEUR DES LIGNES DU TABLEAU */
+table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; table-layout: fixed; font-size: 13px; }
+th, td { padding: 5px 8px !important; text-align: left; border-bottom: 1px solid #ddd; word-wrap: break-word; vertical-align: middle; line-height: 1.2; }
+th { background-color: #1e2229; color: white; font-weight: bold; font-size: 13px; }
+tr:hover { background-color: #f1f4f6; }
+
+/* 📐 RÉPARTITION PROPORTIONNELLE SUR 9 COLONNES COMPACTES */
+th:nth-child(1), td:nth-child(1) { width: 11%; } /* Date */
+th:nth-child(2), td:nth-child(2) { width: 10%; } /* Code Lot */
+th:nth-child(3), td:nth-child(3) { width: 11%; } /* Poules Vivantes */
+th:nth-child(4), td:nth-child(4) { width: 14%; } /* Œufs Intacts */
+th:nth-child(5), td:nth-child(5) { width: 10%; } /* Œufs Cassés */
+th:nth-child(6), td:nth-child(6) { width: 12%; } /* Plateaux */
+th:nth-child(7), td:nth-child(7) { width: 11%; } /* Taux de Ponte */
+th:nth-child(8), td:nth-child(8) { width: 11%; } /* Opérateur 👤 */
+th:nth-child(9), td:nth-child(9) { width: 10%; } /* Action */
+
+.action-column { text-align: center !important; }
+.btn-action-edit { background-color: #f1c40f; color: #1e2229; border: 1px solid #d4ac0d; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: background 0.2s; display: inline-block; }
+.btn-action-edit:hover { background-color: #f39c12; }
+.alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+.alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert.error { background-color: #f8d7da; color: #721c24; ; border: 1px solid #f5c6cb; }
+
+@media print {
+    body { background-color: white; padding: 0; margin: 0; color: #000 !important; }
+    .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; }
+    
+    /* Cache les éléments d'interface écran */
+    .header-block, form, .filter-print-zone, .action-column, .print-hide { 
+        display: none !important; 
+    }
+    
+    /* 🌟 Force l'apparition de l'en-tête de configuration corporative */
+    .print-header { 
+        display: flex !important; 
+        justify-content: space-between !important; 
+        align-items: center !important; 
+    }
+    
+    table { display: table !important; width: 100% !important; border: 1px solid #333 !important; border-collapse: collapse !important; table-layout: fixed !important; }
+    th { background-color: #eaecee !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border-bottom: 2px solid #000 !important; }
+    th, td { display: table-cell !important; padding: 6px !important; border: 1px solid #333 !important; font-size: 11px !important; }
+    th:nth-child(9), td:nth-child(9) { display: none !important; }
+}
+
+/* ==========================================
+   DESIGN DE LA PAGINATION CENTRALISÉE
+   ========================================== */
+.pagination-container {
+    display: flex;
+    justify-content: center; /* Centrage horizontal absolu */
+    align-items: center;
+    gap: 6px;
+    margin: 30px auto 15px auto; /* Marge équilibrée haut/bas */
+    padding: 10px;
+    width: 100%;
+}
+
+.pagination-link {
+    padding: 8px 14px;
+    background-color: #ffffff;
+    color: #1e2229;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    border: 1px solid #cfd9db;
+    transition: all 0.2s ease;
+}
+
+.pagination-link:hover {
+    background-color: #9b59b6; /* Rappel du violet de la charte */
+    color: white;
+    border-color: #9b59b6;
+}
+
+.pagination-active {
+    padding: 8px 14px;
+    background-color: #1e2229; /* Couleur sombre identique aux en-têtes du tableau */
+    color: white;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    border: 1px solid #1e2229;
+}
+
+.pagination-disabled {
+    padding: 8px 14px;
+    background-color: #f8f9fa;
+    color: #bdc3c7;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e6e6e6;
+    cursor: not-allowed;
+}
+
+.pagination-separator {
+    color: #7f8c8d;
+    padding: 0 5px;
+    font-weight: bold;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+<!-- En-tête réglementaire imprimé pour l'entreprise (PROMAS) -->
+<div class="print-header" style="width: 100%; border-bottom: 3px double #333; padding-bottom: 15px; margin-bottom: 25px; display: none;">
+    <div>
+        <!-- Lecture directe des informations de la ligne Configuration ou texte de secours -->
+        <h1 style="margin: 0; font-size: 22px; font-weight: bold; color: #000;">
+            {{ entreprise.raison_sociale if entreprise and entreprise.raison_sociale else 'PROMAS Aviculture' }}
+        </h1>
+        <p style="margin: 4px 0; font-size: 13px; color: #333;">
+            {{ entreprise.adresse if entreprise and entreprise.adresse else 'Dakar, Sénégal' }}
+        </p>
+        <p style="margin: 2px 0; font-size: 13px; color: #333;">
+            Tél: {{ entreprise.telephone if entreprise and entreprise.telephone else '+221 77 345 69 34' }}
+        </p>
+    </div>
+    <div style="text-align: right;">
+        <h2 style="margin: 0; color: #1e2229; font-size: 18px; font-weight: bold;">
+            Registre de Production d'Œufs
+        </h2>
+        <!-- 🌟 CORRECTION DES VARIABLES JINJA SANS LE "E" POUR CORRESPONDRE A LA ROUTINE PYTHON -->
+        <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; display: inline-block; color: #000;">
+            Période : {{ mois_actif if mois_actif else 'Tous' }} / {{ annee_actif if annee_actif else 'Toutes' }}
+        </p>
+    </div>
+</div>
+
+<div class="header-block">
+<h2 id="form-title">⚙️ Ramassage Quotidien et Production d'Œufs</h2>
+<a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert {{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form action="{{ url_for('ajouter_production') }}" method="POST" id="productionForm">
+<input type="hidden" id="id_production_modif" name="id_production_modif" value="">
+<div class="form-grid">
+<div class="form-group">
+<label for="id_lot">Sélectionner le Lot Avicole * :</label>
+<select id="id_lot" name="id_lot" required>
+<option value="" disabled selected>-- Choisir un lot --</option>
+{% for lot in lots %}
+<option value="{{ lot.id_lot }}">{{ lot.code_lot }} ({{ lot.souche }})</option>
+{% endfor %}
+</select>
+</div>
+<div class="form-group">
+<label for="date_production">Date de collecte du jour * :</label>
+<input type="date" id="date_production" name="date_production" required>
+</div>
+<div class="form-group">
+<label for="nombre_oeufs">Nombre d'Œufs Intacts collectés * :</label>
+<input type="number" id="nombre_oeufs" name="nombre_oeufs" min="0" placeholder="Ex: 720" required>
+</div>
+<div class="form-group">
+<label for="oeufs_casses">Nombre d'Œufs Cassés / Fêlés :</label>
+<input type="number" id="oeufs_casses" name="oeufs_casses" min="0" placeholder="Ex: 5">
+</div>
+<button type="submit" id="submitBtn" class="btn-submit">⚙️ Enregistrer le Ramassage</button>
+<button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">⚙️ Annuler la modification</button>
+</div>
+</form>
+
+<div class="filter-print-zone">
+<div class="filter-box">
+<div style="display: flex; align-items: center; gap: 8px;">
+<label for="filter_lot" style="margin: 0; white-space: nowrap; font-weight: bold; font-size: 14px;">Lot :</label>
+<select id="filter_lot" style="padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;" onchange="filtrerRegistre()">
+<option value="">-- Tous les Lots --</option>
+{% for lot in lots %}
+<option value="{{ lot.id_lot }}" {% if lot_actif|string == lot.id_lot|string %}selected{% endif %}>{{ lot.code_lot }}</option>
+{% endfor %}
+</select>
+</div>
+<div style="display: flex; align-items: center; gap: 8px;">
+<label for="filter_mois" style="margin: 0; white-space: nowrap; font-weight: bold; font-size: 14px;">Mois :</label>
+<select id="filter_mois" style="padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;" onchange="filtrerRegistre()">
+<option value="">-- Tous les Mois --</option>
+<option value="01" {% if mois_actif|string in ['01', '1'] %}selected{% endif %}>Janvier</option>
+<option value="02" {% if mois_actif|string in ['02', '2'] %}selected{% endif %}>Février</option>
+<option value="03" {% if mois_actif|string in ['03', '3'] %}selected{% endif %}>Mars</option>
+<option value="04" {% if mois_actif|string in ['04', '4'] %}selected{% endif %}>Avril</option>
+<option value="05" {% if mois_actif|string in ['05', '5'] %}selected{% endif %}>Mai</option>
+<option value="06" {% if mois_actif|string in ['06', '6'] %}selected{% endif %}>Juin</option>
+<option value="07" {% if mois_actif|string in ['07', '7'] %}selected{% endif %}>Juillet</option>
+<option value="08" {% if mois_actif|string in ['08', '8'] %}selected{% endif %}>Août</option>
+<option value="09" {% if mois_actif|string in ['09', '9'] %}selected{% endif %}>Septembre</option>
+<option value="10" {% if mois_actif|string == '10' %}selected{% endif %}>Octobre</option>
+<option value="11" {% if mois_actif|string == '11' %}selected{% endif %}>Novembre</option>
+<option value="12" {% if mois_actif|string == '12' %}selected{% endif %}>Décembre</option>
+</select>
+</div>
+<div style="display: flex; align-items: center; gap: 8px;">
+<label for="filter_annee" style="margin: 0; white-space: nowrap; font-weight: bold; font-size: 14px;">Année :</label>
+<select id="filter_annee" style="padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc;" onchange="filtrerRegistre()">
+<option value="">-- Toutes les Années --</option>
+{% set annees_affichees = [] %}
+{% for p in productions %}
+{% set annee_extrait = p.date_iso[:4] if p.date_iso else '' %}
+{% if annee_extrait and annee_extrait not in annees_affichees %}
+<option value="{{ annee_extrait }}" {% if annee_actif|string == annee_extrait|string %}selected{% endif %}>{{ annee_extrait }}</option>
+{% set _ = annees_affichees.append(annee_extrait) %}
+{% endif %}
+{% endfor %}
+</select>
+</div>
+</div>
+    <!-- 4. Bouton Imprimer masqué pour les profils ouvriers -->
+    {% if est_admin %}
+        <button type="button" class="btn-print print-hide" onclick="window.print()"> 
+            🖨️ Imprimer le registre
+        </button>
+    {% endif %}
+</div>
+
+{% set total_oeufs_filtres = namespace(val=0) %}
+{% for p in productions %}
+{% set total_oeufs_filtres.val = total_oeufs_filtres.val + p.nombre_oeufs + (p.oeufs_casses or 0) %}
+ {% endfor %}
+
+        <div style="background-color: #fff9db; border: 2px solid #f1c40f; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+            <div>
+                <h3 style="margin: 0; font-size: 15px; color: #1e2229;">
+                    📊 Bilan de Production de la Sélection Filtrée
+                </h3>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #555;">
+                    Filtres : 
+                    <strong>Lot :</strong> {{ lot_actif if lot_actif else 'Tous' }} | 
+                    <strong>Mois :</strong> {{ mois_actif if mois_actif else 'Tous' }} | 
+                    <strong>Année :</strong> {{ annee_actif if annee_actif else 'Toutes' }}
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-size: 22px; font-weight: bold; color: #d35400;">
+                    {{ (total_oeufs_filtres.val / 30) | round(1) }} <span style="font-size: 14px;">Tablettes</span>
+                </span>
+                <div style="font-size: 11px; color: #7f8c8d;">({{ total_oeufs_filtres.val }} œufs au total)</div>
+            </div>
+        </div>
+
+<h2 class="print-hide" style="margin-top: 30px; color: #1e2229; font-size: 18px; border-bottom: 2px solid #ccc; padding-bottom: 8px;">
+        <!-- ⚙️ REGISTRE CHRONOLOGIQUE DES COLLECTES ET TAUX DE RENDEMENT -->
+        <h2>⚙️ Registre Historique des Collectes et Taux de Rendement</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Code Lot</th>
+                    <th>Poules Vivantes</th>
+                    <th>Œufs Sains</th>
+                    <th>Œufs Cassés</th>
+                    <th>Plateaux (30)</th>
+                    <th>Taux de Ponte</th>
+                    <th>Opérateur</th>
+                    <th class="action-column">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if productions %}
+                    {% for p in productions %}
+                        <tr>
+                            <!-- 1. Date de collecte -->
+                            <td id="date-{{ p.id_production }}" data-dateiso="{{ p.date_iso }}">
+                                {{ p.date_affichage }}
+                            </td>
+                            
+                            <!-- 2. Code Lot -->
+                            <td id="lot-{{ p.id_production }}" data-idlot="{{ p.id_lot }}">
+                                <strong>{{ p.lot_avicole.code_lot if p.lot_avicole else 'Inconnu' }}</strong>
+                            </td>
+                            
+                            <!-- 3. Effectif résiduel -->
+                            <td>
+                                {{ p.poules_vivantes }} têtes
+                            </td>
+                            
+                            <!-- 4. Œufs Intacts Sains -->
+                            <td id="sains-{{ p.id_production }}">
+                                <span style="font-weight: bold; color: #27ae60;">{{ p.nombre_oeufs }} unités</span>
+                            </td>
+                            
+                            <!-- 5. Œufs Cassés / Fêlés -->
+                            <td id="casses-{{ p.id_production }}" style="color: #c0392b;">
+                                {{ p.oeufs_casses or 0 }} unités
+                            </td>
+                            
+                            <!-- 6. Total converti en Plateaux de 30 -->
+                            <td style="background-color: #fff2cc; font-weight: bold; text-align: center; border: 1px solid #f1c40f; color: #b78a00;">
+                                {{ ((p.nombre_oeufs + (p.oeufs_casses or 0)) / 30) | round(1) }} pl.
+                            </td>
+                            
+                            <!-- 7. Taux de rendement du jour -->
+                            <td>
+                                <span style="font-weight: bold; color: #2980b9;">{{ p.taux_ponte }} %</span>
+                            </td>
+                            
+                            <!-- 8. Identification de l'opérateur de saisie -->
+                            <td>
+                                {% if est_admin or p.id_user == session['user_id'] %}
+                                    <span style="color: #2c3e50; font-weight: bold; font-size: 13px;">
+                                        @{{ p.auteur.NomUtilisateur if p.auteur else 'PROMAS' }}
+                                    </span>
+                                {% else %}
+                                    <span style="color: #7f8c8d; font-style: italic; font-size: 13px;">Masqué</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- 9. Bouton d'édition en ligne -->
+                            <td class="action-column">
+                                <button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ p.id_production }}')">✏ Modifier</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <!-- Le colspan=9 comble parfaitement les 9 en-têtes sans décalage -->
+                        <td colspan="9" style="text-align: center; color: #7f8c8d; padding: 25px; font-weight: bold; background: #fafafa;">
+                            ℹ Aucun enregistrement de ponte trouvé pour cette sélection.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+<!-- CONTROLEUR DE PAGINATION CENTRÉ (FORCÉ ET MASQUÉ À L'IMPRESSION) -->
+<div class="pagination-container print-hide">
+
+    <!-- Bouton Précédent -->
+    {% if pagination and pagination.has_prev %}
+        <a href="{{ url_for('liste_productions', page=pagination.prev_num, lot=lot_actif, mois=mois_actif, annee=annee_actif) }}" 
+           class="pagination-link">« Précédent</a>
+    {% else %}
+        <span class="pagination-disabled">« Précédent</span>
+    {% endif %}
+
+    <!-- Parcours et affichage des numéros de page (affichera au moins la page 1) -->
+    {% if pagination %}
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="pagination-active">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('liste_productions', page=page_num, lot=lot_actif, mois=mois_actif, annee=annee_actif) }}" 
+                       class="pagination-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="pagination-separator">...</span>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <!-- Cas de secours si la pagination n'est pas encore initialisée par l'objet Python -->
+        <span class="pagination-active">1</span>
+    {% endif %}
+
+    <!-- Bouton Suivant -->
+    {% if pagination and pagination.has_next %}
+        <a href="{{ url_for('liste_productions', page=pagination.next_num, lot=lot_actif, mois=mois_actif, annee=annee_actif) }}" 
+           class="pagination-link">Suivant »</a>
+    {% else %}
+        <span class="pagination-disabled">Suivant »</span>
+    {% endif %}
+
+</div>
+    </div> <!-- Fin du conteneur principal -->
+
+    <!-- ==============================================================================
+         ⚙️ SCRIPTING INTERACTIF : FILTRAGE MULTICRITÈRE & ÉDITION EN DIRECT
+         ============================================================================== -->
+    <script>
+     function filtrerRegistre() {
+    var lot = document.getElementById('filter_lot').value;
+    var mois = document.getElementById('filter_mois').value;
+    var annee = document.getElementById('filter_annee').value;
+    // Forcer la page 1 lors de l'application d'un nouveau filtre
+    window.location.href = "{{ url_for('liste_productions') }}?page=1&lot=" +
+        encodeURIComponent(lot) +
+        "&mois=" + encodeURIComponent(mois) +
+        "&annee=" + encodeURIComponent(annee);
+}
+        // 🟢 ROUTINE DE MODIFICATION (Chargement d'une ligne dans le formulaire de saisie)
+        function chargerDonnees(id) {
+            console.log("Chargement de la fiche de ponte ID :", id);
+            
+            // 1. Mise à jour textuelle et visuelle du formulaire jaune
+            document.getElementById('form-title').innerText = "✏ Correction d'un Rapport de Ponte";
+            document.getElementById('submitBtn').innerText = "⚙️ Mettre à jour le Ramassage";
+            document.getElementById('submitBtn').classList.add('btn-edit-mode');
+            document.getElementById('cancelBtn').style.display = "inline-block";
+            
+            // 2. Ciblage et capture isolée des données de la ligne sélectionnée
+            var lotEl = document.getElementById('lot-' + id);
+            var dateEl = document.getElementById('date-' + id);
+            var sainsEl = document.getElementById('sains-' + id);
+            var cassesEl = document.getElementById('casses-' + id);
+            
+            if (lotEl && sainsEl && cassesEl && dateEl) {
+                var lotId = lotEl.getAttribute('data-idlot');
+                var dateIso = dateEl.getAttribute('data-dateiso');
+                var sainsVal = sainsEl.innerText.replace(" unités", "").trim();
+                var cassesVal = cassesEl.innerText.replace(" unités", "").trim();
+                
+                // 3. Injection dans les balises input du formulaire
+                document.getElementById('id_production_modif').value = id;
+                document.getElementById('id_lot').value = lotId;
+                document.getElementById('date_production').value = dateIso;
+                document.getElementById('nombre_oeufs').value = parseInt(sainsVal) || 0;
+                document.getElementById('oeufs_casses').value = parseInt(cassesVal) || 0;
+                
+                // 4. Positionnement fluide de la vue utilisateur en haut de page
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                alert("❌ Erreur technique : Impossible d'extraire les données de cette ligne.");
+            }
+        }
+
+        // 🟢 ROUTINE D'ANNULATION (Réinitialisation vers le mode ajout de base)
+        function annulerModification() {
+            // Nettoyage complet des champs écrits
+            document.getElementById('productionForm').reset();
+            
+            // Libération de la variable cachée pour éviter l'écrasement de données
+            document.getElementById('id_production_modif').value = "";
+            
+            // Restauration de l'affichage initial
+            document.getElementById('form-title').innerText = "⚙️ Ramassage Quotidien et Production d'Œufs";
+            document.getElementById('submitBtn').innerText = "⚙️ Enregistrer le Ramassage";
+            document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+            document.getElementById('cancelBtn').style.display = "none";
+        }
+    </script>
+</body>
+</html>

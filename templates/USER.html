@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire d'Inscription Utilisateur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Alignement du formulaire à droite de l'écran */
+        .form-container {
+            display: flex;
+            justify-content: flex-end; 
+            padding: 20px;
+        }
+
+        form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        /* CORRECTION : Utilisation exclusive de types HTML officiels et reconnus */
+        input[type="text"],
+        input[type="password"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Styles graphiques des alertes d'insertion Flask */
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+        .success { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <p><a href="https://promas.sn" target="_blank">Visiter PROMAS</a></p>
+
+    <div class="form-container">
+        <!-- Connexion du bouton de soumission à l'URL Python d'insertion -->
+        <form action="/ajouter_utilisateur" method="POST">
+            <h2>Créez un compte </h2>
+
+            <!-- Structure Jinja aérée pour un rendu visuel optimal -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Champ Nom d'utilisateur -->
+            <label for="Nom_utilisateur">Nom d'utilisateur :</label>
+            <input type="text" id="Nom_utilisateur" name="NomUtilisateur" required>
+
+            <!-- Champ Mot de passe -->
+            <label for="password">Mot de passe :</label>
+            <input type="password" id="password" name="MotPasse" required>
+            
+            <!-- Nom de l'école -->
+            <label for="Fonction">Fonction :</label>
+            <input type="text" id="Fonction" name="Fonction" required>
+            
+            <!-- Adresse physique -->
+            <label for="Adresse">Adresse :</label>
+            <input type="text" id="Adresse" name="Adresse" required>
+
+            <!-- Téléphone (Type 'tel' officiel pour le clavier numérique mobile) -->
+            <label for="Téléphone">Téléphone :</label>
+            <input type="tel" id="Téléphone" name="Telephone" required>
+
+            <!-- NOUVEAU : Champ Code d'invitation secret -->
+            <label for="Code_invitation">Code d'invitation secret :</label>
+            <input type="text" id="Code_invitation" name="CodeInvitation" placeholder="Code requis pour s'inscrire" required>
+           
+            <button type="submit">S'inscrire</button>
+        </form>
+    </div>
+
+</body>
+</html>

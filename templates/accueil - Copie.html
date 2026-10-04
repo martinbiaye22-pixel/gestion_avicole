@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Gestion Avicole</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 260px;
+            background-color: #1e2229;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar-brand {
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #11151c;
+            border-bottom: 1px solid #2d323e;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .menu-category {
+            padding: 12px 20px 5px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #4b646f;
+            font-weight: bold;
+            background-color: #1a1f25;
+        }
+        .menu-item {
+            padding: 12px 20px;
+            display: block;
+            color: #b8c7ce;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .menu-item:hover {
+            background-color: #2c313c;
+            color: #fff;
+            border-left-color: #2ecc71;
+        }
+        .submenu {
+            list-style: none;
+            margin: 0;
+            background-color: #161920;
+            padding: 0;
+        }
+        .submenu-item {
+            padding: 10px 15px 10px 35px;
+            display: block;
+            color: #8aa4af;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .submenu-item:hover {
+            color: #fff;
+            background-color: #202632;
+        }
+        .sidebar-footer {
+            padding: 15px;
+            background-color: #11151c;
+            border-top: 1px solid #2d323e;
+        }
+        .btn-logout {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover { background-color: #c82333; }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .top-bar {
+            background-color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-bottom: 1px solid #e6e6e6;
+        }
+        .top-bar h2 { margin: 0; color: #333; font-size: 20px; }
+        .top-bar p { margin: 0; color: #666; font-size: 14px; }
+        
+        .dashboard-body { padding: 30px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .card { background: white; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex: 1; min-width: 320px; }
+        .card h3 { margin-top: 0; color: #222; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; font-size: 18px; }
+        
+        input[type="text"] { width: 100%; padding: 10px; margin: 12px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-submit { padding: 10px 15px; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-submit:hover { background-color: #2980b9; }
+        .btn-config { display: inline-block; background-color: #2ecc71; color: white; padding: 10px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 10px; transition: background 0.2s; }
+        .btn-config:hover { background-color: #27ae60; }
+        
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+        .success { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">
+        Gestion Avicole v1.0
+    </div>
+    <ul class="sidebar-menu">
+        <li><a href="/" class="menu-item">📊 Tableau de bord</a></li>
+ 
+        <!-- CATEGORIE: COMMERCIAL & STOCKS -->
+            <li class="menu-category">Commercial & Tiers</li>
+            <li>
+                <span class="menu-item">📦 Stocks & Achats</span>
+                <ul class="submenu">
+                    <li><a href="{{ url_for('liste_fournisseurs') }}" class="submenu-item">Fournisseurs</a></li>
+                     <li><a href="{{ url_for('liste_produits') }}" class="submenu-item">Produits & Matières</a></li>
+                    <!-- MISE À JOUR : Liaison vers le module de suivi des achats d'aliments -->
+                    <li><a href="{{ url_for('liste_achats') }}" class="submenu-item">Registre des Achats</a></li>
+                </ul>
+            </li>
+
+        <li>
+            <span class="menu-item">👥 Clients & Ventes</span>
+            <ul class="submenu">
+                <li><!-- Mettre à jour cette ligne sous la catégorie Gestion des Tiers de votre accueil -->
+                    <li><a href="{{ url_for('liste_clients') }}" class="submenu-item">🤝Clients</a></li>
+                    <li><a href="{{ url_for('suivi_ventes') }}" class="submenu-item">🤝Ventes Produits</a></li>
+                  <li><a href="{{ url_for('liste_factures') }}" class="submenu-item" style="border-left: 3px solid #f39c12; color: #f39c12; font-weight: bold;"> 🧾 Facturier &amp; Créances</a></li>
+                  <li><a href="{{ url_for('gestion_paiements_page') }}" class="submenu-item" style="border-left: 3px solid #2ecc71; color: #2ecc71; font-weight: bold;">💰 Guichet de Caisse</a></li>
+            </ul>
+        </li>
+   
+        
+       <!-- --- CATEGORIE : SUIVI DES LOTS AVICOLES --- -->
+<li>
+    <span class="menu-item">🐔 Élevage & Production</span>
+    <ul class="submenu">
+        <!-- Lien vers la création et registre des lots -->
+        <li><a href="{{ url_for('liste_lots') }}" class="submenu-item">Suivi des Lots</a></li>
+        
+        <!-- NOUVEAU : Lien vers le registre de distribution d'aliments du mois -->
+        <li><a href="{{ url_for('liste_alimentations') }}" class="submenu-item">🌾 Suivi Consommation</a></li>
+        
+        <!-- NOUVEAU : Lien vers le suivi hebdomadaire du poids moyen -->
+        <li><a href="{{ url_for('liste_croissance') }}" class="submenu-item">⚖️ Suivi Croissance</a></li>
+        
+        <!-- Lien vers le registre de mortalité -->
+        <li><a href="{{ url_for('liste_mortalites') }}" class="submenu-item">💀 Mortalité</a></li>
+         <li><a href="{{ url_for('liste_productions') }}" class="submenu-item">🍳 Production d'Œufs</a></li>
+        </ul>
+        </li>
+     </ul>
+    <div class="sidebar-footer">
+        <a href="/deconnexion" class="btn-logout">Se déconnecter</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="top-bar">
+        <h2>Ferme Avicole</h2>
+        <p>Utilisateur connecté : <strong>{{ session['username'] }}</strong></p>
+    </div>
+    
+    <div class="dashboard-body">
+        <div style="width: 100%;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- BLOC DE CONFIGURATION DE L'ENTREPRISE -->
+        <div class="card" style="flex: 1 1 100%;">
+            <h3>🏢 Paramètres d'En-tête de l'Entreprise</h3>
+            <p>Configurez la raison sociale, les contacts administratifs (NINEA, RCCM) et le logo officiel qui apparaîtront sur vos factures et reçus.</p>
+            <a href="{{ url_for('modifier_configuration') }}" class="btn-config">
+                ⚙️ Saisir les données de l'exploitation
+            </a>
+        </div>
+
+        <div class="card">
+            <h3>Menu Principal</h3>
+            <p>Votre session administrative a été ouverte avec succès.</p>
+            <p>Utilisez les volets de navigation situés dans le menu à gauche pour piloter l'élevage, suivre la production et enregistrer les flux financiers.</p>
+        </div>
+
+        <div class="card">
+            <h3>Sécurité du Réseau</h3>
+            <p>Clé d'invitation active exigée pour l'ajout de nouveaux utilisateurs :
+                <strong style="color: #28a745; font-size: 16px;">{{ code_secret }}</strong>
+            </p>
+            <form action="/maj_code_secret" method="POST">
+                <label for="NouveauCode">Générer une nouvelle clé d'accès masquée : </label>
+                <input type="text" id="NouveauCode" name="NouveauCode" placeholder="Ex: CléUnique2026" required>
+                <button type="submit" class="btn-submit">Mettre à jour la clé</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

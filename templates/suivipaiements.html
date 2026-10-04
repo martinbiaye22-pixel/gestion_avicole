@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guichet d'Encaissement & Recettes</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background-color: #f4f4f9; 
+            color: #333; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 20px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+        .header-block { 
+            border-bottom: 2px solid #2ecc71; 
+            padding-bottom: 12px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        h2 { 
+            color: #1e2229; 
+            margin: 0; 
+            font-size: 22px; 
+        }
+        .btn-back { 
+            background-color: #7f8c8d; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        .btn-back:hover { 
+            background-color: #6c7a7d; 
+        }
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 6px; 
+            border: 1px solid #e6e6e6; 
+            margin-bottom: 30px; 
+        }
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        label { 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+            color: #2c3e50; 
+            font-size: 13px; 
+        }
+        input, select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            box-sizing: border-box; 
+        }
+        .btn-submit { 
+            background-color: #2ecc71; 
+            color: white; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: bold; 
+            grid-column: span 4; 
+            transition: background 0.2s; 
+        }
+        .btn-submit:hover { 
+            background-color: #27ae60; 
+        }
+        
+        /* FINESSE ET COMPACITÉ DES LIGNES STYLE COMPTABLE */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            font-size: 13px; 
+            table-layout: fixed; 
+        }
+        th, td { 
+            padding: 4px 6px !important; 
+            height: 26px !important; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+            vertical-align: middle; 
+            word-wrap: break-word; 
+        }
+        th { 
+            background-color: #1e2229; 
+            color: white; 
+            font-weight: bold; 
+        }
+        tr:hover { 
+            background-color: #f1f4f6; 
+        }
+        
+        /* Définition stricte des largeurs des colonnes */
+        th:nth-child(1), td:nth-child(1) { width: 11%; } /* Date */
+        th:nth-child(2), td:nth-child(2) { width: 13%; } /* N° Facture */
+        th:nth-child(3), td:nth-child(3) { width: 18%; } /* Nom du Client */
+        th:nth-child(4), td:nth-child(4) { width: 14%; } /* Mode de Paiement */
+        th:nth-child(5), td:nth-child(5) { width: 16%; text-align: right; } /* Montant Encaissé */
+        th:nth-child(6), td:nth-child(6) { width: 12%; } /* Opérateur */
+        th:nth-child(7), td:nth-child(7) { width: 16%; text-align: center; } /* Actions format */
+        
+        .alert { 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+        }
+        .alert-success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .alert-error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .btn-nav { 
+            padding: 4px 8px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            color: white; 
+            margin-right: 3px; 
+            display: inline-block;
+        }
+        .btn-facture { 
+            background-color: #f39c12; 
+        }
+        .btn-facture:hover { 
+            background-color: #d68910; 
+        }
+        
+        /* STYLE PAGINATION NETTE */
+        .pagination-block { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #ebebeb; 
+        }
+        .pagination-btn { 
+            background-color: white; 
+            color: #2c3e50; 
+            padding: 6px 12px; 
+            text-decoration: none; 
+            border: 1px solid #cfd9db; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .pagination-btn:hover:not(.disabled) { 
+            background-color: #f1f4f6; 
+        }
+        .pagination-btn.disabled { 
+            color: #bdc3c7; 
+            cursor: not-allowed; 
+            background-color: #f8f9fa; 
+            border-color: #ebebeb; 
+        }
+        
+        .print-only-header { 
+            display: none; 
+        }
+
+        /* --- STYLES SÉCURISÉS DÉDIÉS À L'IMPRESSION PAPER --- */
+        @media print {
+            .print-hide, form, .filter-print-zone, .header-block, .pagination-block { 
+                display: none !important; 
+            }
+            .print-only-header { 
+                display: block !important; 
+                border-bottom: 2px solid #000 !important; 
+                padding-bottom: 10px !important; 
+                margin-bottom: 20px !important; 
+            }
+            table { 
+                width: 100% !important; 
+                table-layout: auto !important; 
+                border: 1px solid #333 !important; 
+                border-collapse: collapse !important; 
+            }
+            th { 
+                background-color: #1e2229 !important; 
+                color: white !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            th, td { 
+                border: 1px solid #333 !important; 
+                padding: 6px 10px !important; 
+                font-size: 12px !important; 
+                color: #000 !important; 
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    
+    <!-- En-tête d'impression (Masqué à l'écran, actif sur papier) -->
+    <div class="print-only-header">
+        <div style="float: left;">
+            <h1 style="margin: 0; font-size: 20px;">PROMAS</h1>
+            <p style="margin: 4px 0; font-size: 12px;">Parcelles Assainies, Dakar</p>
+        </div>
+        <div style="float: right; text-align: right;">
+            <h2 style="margin: 0; font-size: 16px;">Registre Historique des Encaissements</h2>
+            <p style="margin: 4px 0; font-size: 11px;">Mois: {{ mois_sel }} / Année: {{ annee_sel }}</p>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <!-- Barre supérieure écran -->
+    <div class="header-block print-hide">
+        <h2>Guichet de Caisse & Saisie des Règlements</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('suivi_ventes') }}" style="background-color: #2e86c1; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">Ventes</a>
+            <a href="{{ url_for('liste_factures') }}" class="btn-nav btn-facture" style="padding: 8px 15px; font-size: 14px;">Factures</a>
+            <a href="/" class="btn-back">← Tableau de Bord</a>
+        </div>
+    </div>
+
+    <!-- Notifications Système -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulaire d'enregistrement d'encaissement -->
+    <form action="{{ url_for('gestion_paiements_page') }}" method="POST" class="print-hide">
+        <div class="form-grid">
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="id_facture">Sélectionner la Facture à encaisser * :</label>
+                <select id="id_facture" name="id_facture" required>
+                    <option value="" disabled selected>-- Choisir une facture en attente --</option>
+                    {% for f in factures_disponibles %}
+                        <option value="{{ f.id_facture }}">{{ f.libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="montant">Montant du versement (FCFA) * :</label>
+                <input type="number" id="montant" name="montant" min="1" placeholder="Ex: 50000" required>
+            </div>
+            <div class="form-group">
+                <label for="mode_paiement">Mode de règlement * :</label>
+                <select id="mode_paiement" name="mode_paiement" required>
+                    <option value="Espèces">Espèces (Caisse locale)</option>
+                    <option value="Wave">Mobile Money (Wave)</option>
+                    <option value="Orange Money">Mobile Money (Orange Money)</option>
+            <!-- Suite du Formulaire d'Enregistrement (Fermeture des options) -->
+                    <option value="Chèque">Chèque Bancaire</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 4;">
+                <label for="date_paiement">Date de réception des fonds * :</label>
+                <input type="date" id="date_paiement" name="date_paiement" required>
+            </div>
+            <button type="submit" class="btn-submit">✔ Confirmer l'Encaissement &amp; Mettre à jour le Statut</button>
+        </div>
+    </form>
+
+    <!-- Bandeau de Recettes Unique (Hybride Écran/Papier) -->
+    <div style="background-color: #e8f8f5; border: 1px solid #a2d9ce; padding: 12px 20px; border-radius: 6px; margin-bottom: 25px; text-align: right; font-weight: bold; color: #16a085; font-size: 16px;">
+        Total des recettes réelles de la période : <span>{{ total_ca_encaisse|int }}</span> FCFA
+    </div>
+
+    <!-- ZONE DES FILTRES COMPTABLES SERVEUR -->
+    <div class="filter-print-zone print-hide" style="background: #eef2f5; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db;">
+        <form method="GET" action="{{ url_for('gestion_paiements_page') }}" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin: 0; width: 100%;">
+            <label style="font-weight: bold; font-size: 13px; margin: 0;">Filtrer le registre :</label>
+            
+            <select name="filter_mois" onchange="this.form.submit()">
+                <option value="">-- Tous les mois --</option>
+                <option value="01" {% if mois_sel == '01' %}selected{% endif %}>Janvier</option>
+                <option value="02" {% if mois_sel == '02' %}selected{% endif %}>Février</option>
+                <option value="03" {% if mois_sel == '03' %}selected{% endif %}>Mars</option>
+                <option value="04" {% if mois_sel == '04' %}selected{% endif %}>Avril</option>
+                <option value="05" {% if mois_sel == '05' %}selected{% endif %}>Mai</option>
+                <option value="06" {% if mois_sel == '06' %}selected{% endif %}>Juin</option>
+                <option value="07" {% if mois_sel == '07' %}selected{% endif %}>Juillet</option>
+                <option value="08" {% if mois_sel == '08' %}selected{% endif %}>Août</option>
+                <option value="09" {% if mois_sel == '09' %}selected{% endif %}>Septembre</option>
+                <option value="10" {% if mois_sel == '10' %}selected{% endif %}>Octobre</option>
+                <option value="11" {% if mois_sel == '11' %}selected{% endif %}>Novembre</option>
+                <option value="12" {% if mois_sel == '12' %}selected{% endif %}>Décembre</option>
+            </select>
+
+            <select name="filter_annee" onchange="this.form.submit()">
+                <option value="">-- Toutes les années --</option>
+                {% for annee in liste_annees %}
+                    <option value="{{ annee }}" {% if annee_sel == annee|string %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="filter_client" onchange="this.form.submit()">
+                <option value="">-- Tous les clients --</option>
+                {% for c_nom in liste_clients %}
+                    <option value="{{ c_nom }}" {% if client_sel == c_nom %}selected{% endif %}>{{ c_nom }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- TABLEAU COMPTABLE CENTRAL -->
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>N° Facture</th>
+                <th>Nom du Client</th>
+                <th>Mode Règlement</th>
+                <th style="text-align: right;">Montant Encaissé</th>
+                <th>Opérateur</th>
+                <th class="print-hide" style="text-align: center;">Actions Format</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if paiements %}
+                {% for p in paiements %}
+                    <tr class="ligne-paiement">
+                        <td><strong>{{ p.date_paiement.strftime('%d/%m/%Y') if p.date_paiement else '-' }}</strong></td>
+                        <td>{{ p.numero_facture }}</td>
+                        <td>{{ p.nom_client }}</td>
+                        <td><span style="background: #e5e8e8; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">{{ p.mode_paiement }}</span></td>
+                        <td style="font-weight: bold; color: #27ae60; text-align: right;">+ {{ p.montant|int }} FCFA</td>
+                        <td><span style="color: #2980b9; font-weight: bold;">@{{ p.nom_operateur }}</span></td>
+                        <td class="print-hide" style="text-align: center; white-space: nowrap;">
+                            <a href="{{ url_for('generer_facture_pdf', id_facture=p.id_facture) }}" target="_blank" class="btn-nav btn-facture" style="background:#2e86c1;">A4</a>
+                            <a href="{{ url_for('generer_facture_pdf_a5', id_facture=p.id_facture) }}" target="_blank" class="btn-nav btn-facture">A5</a>
+                            <a href="{{ url_for('generer_recu_ticket_80mm', id_paiement=p.id_paiement) }}" target="_blank" class="btn-nav" style="background:#2ecc71;">Ticket</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #7f8c8d; padding: 15px; font-weight: bold; background: #fafafa;">ℹ Aucun flux de trésorerie entrant répertorié.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- BARRE GRAPHIQUE DE PAGINATION NATIVE -->
+    <div class="pagination-block print-hide">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('gestion_paiements_page', page=pagination.prev_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_client=client_sel) }}" class="pagination-btn">« Précédent</a>
+        {% else %}
+            <span class="pagination-btn disabled">« Précédent</span>
+        {% endif %}
+
+        <span style="font-size: 13px; color: #7f8c8d; margin: 0 10px;">Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} fiches encaissées)</span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('gestion_paiements_page', page=pagination.next_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_client=client_sel) }}" class="pagination-btn">Suivant »</a>
+        {% else %}
+            <span class="pagination-btn disabled">Suivant »</span>
+        {% endif %}
+    </div>
+
+</div> <!-- Fin du container global -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var dateInput = document.getElementById('date_paiement');
+        if (dateInput && !dateInput.value) {
+            // Fixation propre et étanche du format ISO AAAA-MM-JJ sans troncature
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
+</script>
+</body>
+</html>

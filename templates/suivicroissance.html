@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi de Croissance Pondérale</title>
+       <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #2ecc71; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-back:hover { background-color: #6c7a7d; }
+
+        .alert.error { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+    border: 1px solid #f5c6cb; 
+    padding: 12px; 
+    margin-bottom: 20px; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    font-size: 14px; 
+}
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        
+        .btn-submit { background-color: #2ecc71; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 2; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #27ae60; }
+        .btn-edit-mode { background-color: #3498db; }
+        .btn-edit-mode:hover { background-color: #2980b9; }
+        .btn-cancel { display: none; background-color: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; text-decoration: none; margin-top: -5px; margin-bottom: 15px; }
+        
+        /* 📜 ALIGNEMENT DU BOUTON ET DU FILTRE SUR LA MÊME LIGNE */
+        .filter-print-zone { display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; gap: 15px; }
+        .filter-box { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; }
+        .btn-print { background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap; transition: background 0.2s; }
+        .btn-print:hover { background-color: #11151c; }
+        
+        /* 📊 BANDEAU DES 4 CARTES D'INDICATEURS SUR UNE SEULE LIGNE */
+        .stats-bandeau { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; width: 100%; }
+        .stat-card { background: #fff; padding: 15px; border-radius: 6px; border-left: 5px solid #2ecc71; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #e6e6e6; border-left-width: 5px; box-sizing: border-box; }
+        .stat-card.orange { border-left-color: #e67e22; }
+        .stat-card.blue { border-left-color: #3498db; }
+        .stat-card h4 { margin: 0 0 5px 0; color: #7f8c8d; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+        .stat-card p { margin: 0; font-size: 20px; font-weight: bold; color: #2c3e50; }
+
+        /* 📋 CORRECTIF STRUCTUREL POUR ÉTIRER ET ALIGNER LE TABLEAU */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; table-layout: fixed; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; word-wrap: break-word; }
+        th { background-color: #1e2229; color: white; font-weight: bold; }
+        tr:hover { background-color: #f1f4f6; }
+        
+       th:nth-child(1), td:nth-child(1) { width: 14%; } /* Date du contrôle */
+       th:nth-child(2), td:nth-child(2) { width: 12%; } /* Code Lot */
+       th:nth-child(3), td:nth-child(3) { width: 14%; } /* Âge du Lot */
+       th:nth-child(4), td:nth-child(4) { width: 18%; } /* Poids Moyen (Grammes) */
+       th:nth-child(5), td:nth-child(5) { width: 14%; } /* Poids en Kg */
+       th:nth-child(6), td:nth-child(6) { width: 14%; } /* Opérateur */
+       th:nth-child(7), td:nth-child(7) { width: 14%; } /* Action (Bouton Modifier) */
+
+        .btn-action-edit { background-color: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; text-decoration: none; }
+        .btn-action-edit:hover { background-color: #d35400; }
+        
+        .print-header { display: none; margin-bottom: 30px; border-bottom: 3px double #333; padding-bottom: 15px; }
+
+        /* ==============================================================================
+           ⚠️ DESIGN REGLEMENTAIRE POUR UN APERÇU D'IMPRESSION NET ET PROPRE
+           ============================================================================== */
+        @media print {
+            body { background-color: white; padding: 0; margin: 0; color: #000 !important; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; }
+            .header-block, #croissanceForm, .filter-print-zone, .action-column, .print-hide { display: none !important; }
+            .print-header { display: flex !important; justify-content: space-between; align-items: center; }
+            .stats-bandeau { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; margin-bottom: 25px !important; width: 100% !important; }
+            .stat-card { border: 1px solid #ddd !important; border-left: 5px solid #2ecc71 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff !important; padding: 10px !important; }
+            .stat-card.orange { border-left-color: #e67e22 !important; }
+            .stat-card.blue { border-left-color: #3498db !important; }
+            table { display: table !important; width: 100% !important; border: 1px solid #333 !important; border-collapse: collapse !important; table-layout: auto !important; }
+            th { background-color: #333 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th, td { display: table-cell !important; padding: 10px !important; border: 1px solid #333 !important; font-size: 12px !important; }
+        }
+         .pagination-block { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #ebebeb; 
+        }
+        .pagination-btn { 
+            background-color: white; 
+            color: #2c3e50; 
+            padding: 6px 12px; 
+            text-decoration: none; 
+            border: 1px solid #cfd9db; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .pagination-btn:hover:not(.disabled) { 
+            background-color: #f1f4f6; 
+        }
+        .pagination-btn.disabled { 
+            color: #bdc3c7; 
+            cursor: not-allowed; 
+            background-color: #f8f9fa; 
+            border-color: #ebebeb; 
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+    <!-- En-tête réglementaire imprimé (PROMAS) -->
+    <div class="print-header">
+        <div>
+            <h1 style="margin: 0; font-size: 24px; font-weight: bold;">{{ entreprise.raison_sociale or 'PROMAS' }}</h1>
+            <p style="margin: 4px 0; font-size: 13px; color: #555;">{{ entreprise.description or 'Hy-Line' }}</p>
+            <p style="margin: 2px 0; font-size: 13px; color: #555;">Tél: {{ entreprise.telephone or '+221773456934' }}</p>
+        </div>
+        <div style="text-align: right;">
+            <h2 style="margin: 0; color: #1e2229; font-size: 20px; font-weight: bold;">Registre de Croissance Pondérale</h2>
+            <p style="margin: 5px 0 0 0; font-size: 13px; font-weight: bold; color: #555;">Suivi de Bande Évolutif</p>
+        </div>
+    </div>
+
+    <!-- En-tête Écran -->
+    <div class="header-block">
+        <h2>⚖️ Contrôle de Croissance et Pesée du Lot</h2>
+        <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulaire d'enregistrement -->
+    <form action="{{ url_for('ajouter_pesee') }}" method="POST" id="croissanceForm">
+        <input type="hidden" id="id_pesee_modif" name="id_pesee_modif" value="">
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_lot">Sélectionner le Lot Avicole * :</label>
+                <select id="id_lot" name="id_lot" required>
+                    <option value="" disabled selected>-- Choisir un lot --</option>
+                    {% for lot in lots %}
+                        <option value="{{ lot.id_lot }}">{{ lot.code_lot }} ({{ lot.souche }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date_pesee">Date du contrôle * :</label>
+                <input type="date" id="date_pesee" name="date_pesee" readonly required>
+                </div>
+            <div class="form-group">
+                <label for="age_semaines">Âge du Lot (en semaines) * :</label>
+                <input type="number" id="age_semaines" name="age_semaines" min="0" placeholder="Ex: 4" required>
+            </div>
+            <div class="form-group">
+                <label for="poids_moyen">Poids Moyen constaté par sujet (en Grammes) * :</label>
+                <input type="number" id="poids_moyen" name="poids_moyen" min="1" step="0.1" placeholder="Ex: 450" required>
+            </div>
+            <button type="submit" id="submitBtn" class="btn-submit">💾 Enregistrer la Pesée</button>
+            <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">❌ Annuler la modification</button>
+        </div>
+    </form>
+
+    <!-- ZONE DE RECHERCHE ET FILTRAGE PAR LOT -->
+<div class="filter-print-zone">
+    <div class="filter-box">
+        <label for="filter_lot" style="margin: 0; font-size: 14px;">Filtrer l'historique par Lot Avicole :</label>
+        <select id="filter_lot" style="padding: 6px 12px; font-size: 14px;" onchange="filtrerRegistre()">
+            <option value="">-- Tous les Lots d'Exploitation --</option>
+            {% for lot in lots %}
+                <option value="{{ lot.id_lot }}" {% if lot_actif == lot.id_lot|string %}selected{% endif %}>{{ lot.code_lot }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- 🔒 MASQUAGE STRICT DU BOUTON D'IMPRESSION POUR LES OUVRIERS -->
+    {% if est_admin %}
+        <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimer la liste sélectionnée</button>
+    {% endif %}
+</div>
+            <!-- BANDEAU DES CALCULS ÉCONOMIQUES À 4 CARTES (SANS DOUBLON) -->
+    <div class="stats-bandeau">
+        <div class="stat-card blue">
+            <h4>☑️ SUJETS VIVANTS ACTUELS</h4>
+            <p>{{ effectif_actuel }} têtes</p>
+        </div>
+        
+        <div class="stat-card orange">
+            <h4>🌾 ALIMENTS CONSOMMÉS (CUMULÉ)</h4>
+            <p>{{ "%.1f"|format(total_consomme) }} Kg</p>
+        </div>
+
+        <div class="stat-card orange" style="border-left-color: #f39c12;">
+            <h4>🥣 CONSO. MOYENNE / SUJET</h4>
+            <p>
+                {% if conso_sujet > 0 %}
+                    {{ "{:,.0f}".format(conso_sujet) }} g
+                    <small style="font-size: 11px; font-weight: normal; color: #7f8c8d;"><br>(Aliment ingéré par tête)</small>
+                {% else %}
+                    --
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="stat-card">
+            <h4>📊 INDICE DE CONSOMMATION (IC)</h4>
+            <p>
+                {% if ic > 0 %}
+                    {{ ic }}
+                    <small style="font-size: 11px; font-weight: normal; color: #7f8c8d;"><br>(Pour 1 Kg de gain de chair)</small>
+                {% else %}
+                    -- <small style="font-weight: normal; font-size: 11px; color: #7f8c8d;"><br>(En attente de pesée)</small>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- TITRE DU REGISTRE (MASQUÉ À L'IMPRESSION RÈGLEMENTAIRE) -->
+    <h2 class="print-hide" style="margin-top: 30px; color: #1e2229; font-size: 18px; border-bottom: 2px solid #ccc; padding-bottom: 8px;">
+        📋 Registre Historique des Pesées et Suivi Pondéral
+    </h2>
+    
+    <!-- TABLEAU DE BORD SÉCURISÉ -->
+  <!-- TABLEAU DE BORD SÉCURISÉ -->
+<table>
+<thead>
+<tr>
+    <th>Date du contrôle</th>
+    <th>Code Lot</th>
+    <th>Âge du Lot</th>
+    <th>Poids Moyen (Grammes)</th>
+    <th>Poids en Kg</th>
+    <th>Opérateur</th>
+    <th class="action-column">Action</th>
+</tr>
+</thead>
+<tbody>
+{% if pesees %}
+{% for p in pesees %}
+<tr>
+    <!-- 🌟 ATTENTION AUX IDS ICI : date- , lot- , age- , poids- -->
+    <td id="date-{{ p.id_pesee }}" data-dateiso="{{ p.date_iso }}">{{ p.date_affichage }}</td>
+    <td id="lot-{{ p.id_pesee }}" data-idlot="{{ p.id_lot }}"><strong>{{ p.lot_avicole.code_lot }}</strong></td>
+    <td id="age-{{ p.id_pesee }}">{{ p.age_semaines }} semaines</td>
+    <td id="poids-{{ p.id_pesee }}">{{ p.poids_moyen }} g</td>
+    <td><span style="font-weight: bold; color: #2ecc71;">{{ p.poids_moyen / 1000 }} Kg</span></td>
+    <td>
+        <span style="color: #2c3e50; font-weight: bold; font-size: 13px;">
+            @{{ p.auteur.NomUtilisateur if p.auteur else 'PROMAS' }}
+        </span>
+    </td>
+    <td class="action-column">
+        <!-- Appel de la fonction JavaScript avec l'ID de la pesée -->
+        <button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ p.id_pesee }}')">✏ Modifier</button>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="7" style="text-align: center; color: #7f8c8d; padding: 25px; font-weight: bold; background: #fafafa;">
+        ℹ Aucun enregistrement trouvé pour ces critères de recherche.
+    </td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+    <!-- =============================================================== -->
+    <!-- CORRECTIF : BLOC DE NAVIGATION DE LA PAGINATION TOUJOURS VISIBLE -->
+    <!-- =============================================================== -->
+    <div class="print-hide" style="display: flex; justify-content: center; gap: 8px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e6ebeb;">
+        
+        <!-- Bouton Précédent -->
+        {% if pagination and pagination.has_prev %}
+            <a href="{{ url_for('liste_croissance', page=pagination.prev_num, lot=lot_actif) }}" class="pagination-btn">« Précédent</a>
+        {% else %}
+            <span class="pagination-btn disabled">« Précédent</span>
+        {% endif %}
+
+        <!-- État de la navigation -->
+        <span class="pagination-info">
+            Page <strong>{{ pagination.page if pagination else 1 }}</strong> sur {{ pagination.pages if pagination else 1 }} ({{ pagination.total if pagination else 0 }} contrôles)
+        </span>
+
+        <!-- Bouton Suivant -->
+        {% if pagination and pagination.has_next %}
+            <a href="{{ url_for('liste_croissance', page=pagination.next_num, lot=lot_actif) }}" class="pagination-btn">Suivant »</a>
+        {% else %}
+            <span class="pagination-btn disabled">Suivant »</span>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- ==============================================================================
+     SCRIPTING ANIMÉ : FILTRAGE & ENREGISTREMENTS EN DIRECT
+     ============================================================================== -->
+<script>
+function filtrerRegistre() {
+    var lot = document.getElementById('filter_lot').value;
+    window.location.href = "{{ url_for('liste_croissance') }}?lot=" + lot;
+}
+
+// 🟢 ROUTINE DE MODIFICATION CORRIGÉE ET SÉCURISÉE
+function chargerDonnees(id) {
+    console.log("Tentative de chargement de la ligne ID :", id);
+    
+    // 1. Changement visuel du titre du formulaire jaune en haut de page
+    var formTitle = document.getElementById('form-title');
+    if (!formTitle) {
+        // Sécurité si l'ID form-title n'existe pas, on cherche par h2 dans l'en-tête
+        formTitle = document.querySelector('.header-block h2');
+    }
+    if (formTitle) formTitle.innerText = "✏ Correction d'une Fiche Pesée";
+
+    // 2. Changement visuel des boutons
+    var submitBtn = document.getElementById('submitBtn');
+    var cancelBtn = document.getElementById('cancelBtn');
+    
+    if (submitBtn) {
+        submitBtn.innerText = " Mettre à jour la Fiche";
+        submitBtn.classList.add('btn-edit-mode');
+    }
+    if (cancelBtn) {
+        cancelBtn.style.display = "inline-block";
+    }
+    
+    // 3. Récupération des valeurs depuis les cellules du tableau grâce aux IDs uniques
+    var elementLot = document.getElementById('lot-' + id);
+    var elementDate = document.getElementById('date-' + id);
+    var elementAge = document.getElementById('age-' + id);
+    var elementPoids = document.getElementById('poids-' + id);
+    
+    if (elementLot && elementDate && elementAge && elementPoids) {
+        var lotId = elementLot.getAttribute('data-idlot');
+        var dateIso = elementDate.getAttribute('data-dateiso');
+        var ageVal = elementAge.innerText.replace(" semaines", "").trim();
+        var poidsVal = elementPoids.innerText.replace(" g", "").trim();
+        
+        // 4. Injection des valeurs lues dans les champs de saisie du formulaire
+        document.getElementById('id_pesee_modif').value = id;
+        document.getElementById('id_lot').value = lotId;
+        document.getElementById('date_pesee').value = dateIso;
+        document.getElementById('age_semaines').value = parseInt(ageVal);
+        document.getElementById('poids_moyen').value = parseFloat(poidsVal);
+        
+        // 5. Remontée fluide vers le formulaire en haut de page
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        alert("❌ Erreur technique : Impossible de lire les données de cette ligne dans le tableau.");
+    }
+}
+
+// 🟢 ROUTINE D'ANNULATION VÉRIFIÉE ET SÉCURISÉE
+function annulerModification() {
+    // 1. Réinitialisation complète des champs du formulaire de saisie
+    var formulaire = document.getElementById('croissanceForm');
+    if (formulaire) {
+        formulaire.reset();
+    }
+    
+    // 2. On vide l'ID caché pour repasser en mode "Nouvel Ajout" et ne pas écraser une ancienne fiche
+    var inputHidden = document.getElementById('id_pesee_modif');
+    if (inputHidden) {
+        inputHidden.value = "";
+    }
+    
+    // 3. Restauration des textes d'origine du formulaire
+    var formTitle = document.getElementById('form-title') || document.querySelector('.header-block h2');
+    if (formTitle) {
+        formTitle.innerText = " Contrôle de Croissance et Pesée du Lot";
+    }
+    
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.innerText = " Enregistrer la Pesée";
+        submitBtn.classList.remove('btn-edit-mode');
+    }
+    
+    // 4. On cache à nouveau le bouton "Annuler"
+    var cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) {
+        cancelBtn.style.display = "none";
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInput = document.getElementById('date_pesee');
+    if (dateInput) {
+        var aujourdhui = new Date().toISOString().split('T')[0];
+        dateInput.value = aujourdhui;
+        dateInput.setAttribute('max', aujourdhui);
+        dateInput.setAttribute('min', aujourdhui);
+    }
+});
+</script>
+</body>
+</html>

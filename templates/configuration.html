@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres de l'Exploitation</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f9; 
+            color: #333; 
+            margin: 0; 
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container { 
+            width: 100%;
+            max-width: 650px; 
+            background: white; 
+            margin: 30px padding;
+            padding: 35px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+        }
+        .header-block {
+            border-bottom: 2px solid #2ecc71; 
+            padding-bottom: 12px; 
+            margin-bottom: 25px;
+        }
+        h2 { 
+            color: #1e2229; 
+            margin: 0;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        p.subtitle {
+            color: #7f8c8d;
+            margin: 5px 0 0 0;
+            font-size: 13px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-group { 
+            margin-bottom: 18px; 
+        }
+        .full-width {
+            grid-column: span 2;
+        }
+        label { 
+            display: block; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            color: #2c3e50; 
+            font-size: 13px;
+        }
+        input[type="text"], input[type="email"], input[type="file"] { 
+            width: 100%; 
+            padding: 11px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 14px;
+            background-color: #fcfcfc;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, input[type="email"]:focus {
+            border-color: #2ecc71;
+            outline: none;
+            background-color: #fff;
+        }
+        .logo-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo-preview { 
+            max-height: 70px; 
+            max-width: 120px;
+            object-fit: contain;
+            border: 1px solid #ddd; 
+            padding: 4px; 
+            background: white;
+            border-radius: 4px; 
+        }
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-submit { 
+            background-color: #1e2229; 
+            color: white; 
+            padding: 13px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: bold;
+            width: 100%; 
+            transition: background 0.2s; 
+        }
+        .btn-submit:hover { 
+            background-color: #11151c; 
+        }
+        .btn-back { 
+            text-align: center;
+            color: #7f8c8d; 
+            text-decoration: none; 
+            font-size: 13px; 
+        }
+        .btn-back:hover { 
+            text-decoration: underline; 
+            color: #333;
+        }
+        .alert { 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border-radius: 4px; 
+            font-size: 14px;
+            font-weight: bold; 
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-block">
+        <h2>🏢 Données de l'Exploitation</h2>
+        <p class="subtitle">Ces informations seront automatiquement injectées sur vos en-têtes de facturation.</p>
+    </div>
+
+    <!-- Gestion des messages Flash de Flask -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('modifier_configuration') }}" method="POST" enctype="multipart/form-data">
+        <div class="form-grid">
+            
+            <div class="form-group full-width">
+                <label for="raison_sociale">Raison Sociale / Nom Commercial :</label>
+                <input type="text" id="raison_sociale" name="raison_sociale" value="{{ config.raison_sociale or '' }}" placeholder="Ex: Complexe Avicole de la Teranga" required>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="adresse">Adresse Géographique :</label>
+                <input type="text" id="adresse" name="adresse" value="{{ config.adresse or '' }}" placeholder="Ex: Route de Rufisque, Km 22, Dakar">
+            </div>
+
+            <div class="form-group">
+                <label for="telephone">Téléphone de contact :</label>
+                <input type="text" id="telephone" name="telephone" value="{{ config.telephone or '' }}" placeholder="Ex: +221 33 800 00 00">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Adresse Email :</label>
+                <input type="email" id="email" name="email" value="{{ config.email or '' }}" placeholder="Ex: contact@ferme.sn">
+            </div>
+
+            <div class="form-group">
+                <label for="ninea">NINEA :</label>
+                <input type="text" id="ninea" name="ninea" value="{{ config.ninea or '' }}" placeholder="Numéro d'Identification">
+            </div>
+
+            <div class="form-group">
+                <label for="rccm">RCCM :</label>
+                <input type="text" id="rccm" name="rccm" value="{{ config.rccm or '' }}" placeholder="Registre du Commerce">
+            </div>
+
+            <div class="form-group full-width">
+                <label for="logo">Logo Officiel :</label>
+                <div class="logo-section">
+                    <input type="file" id="logo" name="logo" accept="image/*">
+                    {% if config.logo %}
+                        <img src="{{ url_for('static', filename=config.logo) }}" class="logo-preview" alt="Logo Actuel">
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn-submit">💾 Enregistrer la Configuration</button>
+            <a href="{{ url_for('accueil_admin') }}" class="btn-back">← Annuler et retourner au Tableau de Bord</a>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

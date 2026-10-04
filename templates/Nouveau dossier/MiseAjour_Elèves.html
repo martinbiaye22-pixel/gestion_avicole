@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Principal - Gestion Scolaire</title>
+<style>
+* { box-sizing: border-box; }
+body {
+font-family: Arial, sans-serif;
+margin: 0;
+padding: 0;
+background-color: #f4f4f9;
+display: flex;
+height: 100vh;
+overflow: hidden;
+}
+.sidebar {
+width: 260px;
+background-color: #1e2229;
+color: #fff;
+display: flex;
+flex-direction: column;
+box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+.sidebar-brand {
+padding: 20px;
+text-align: center;
+font-size: 18px;
+font-weight: bold;
+background-color: #11151c;
+border-bottom: 1px solid #2d323e;
+letter-spacing: 0.5px;
+}
+.sidebar-menu {
+list-style: none;
+padding: 0;
+margin: 0;
+flex: 1;
+overflow-y: auto;
+}
+.menu-category {
+padding: 12px 20px 5px 20px;
+font-size: 11px;
+text-transform: uppercase;
+color: #4b646f;
+font-weight: bold;
+background-color: #1a1f25;
+}
+.menu-item {
+padding: 12px 20px;
+display: block;
+color: #b8c7ce;
+text-decoration: none;
+font-weight: bold;
+font-size: 14px;
+border-left: 3px solid transparent;
+transition: all 0.2s ease;
+}
+.menu-item:hover {
+background-color: #2c313c;
+color: #fff;
+border-left-color: #007bff;
+}
+.submenu {
+list-style: none;
+padding: 0;
+margin: 0;
+background-color: #161920;
+}
+.submenu-item {
+padding: 10px 15px 10px 35px;
+display: block;
+color: #8aa4af;
+text-decoration: none;
+font-size: 13px;
+transition: all 0.2s ease;
+}
+.submenu-item:hover {
+color: #fff;
+background-color: #202632;
+}
+.sidebar-footer {
+padding: 15px;
+background-color: #11151c;
+border-top: 1px solid #2d323e;
+}
+.btn-logout {
+display: block;
+width: 100%;
+padding: 10px;
+background-color: #dc3545;
+color: white;
+text-decoration: none;
+border-radius: 4px;
+text-align: center;
+font-size: 14px;
+font-weight: bold;
+transition: background 0.2s;
+}
+.btn-logout:hover { background-color: #c82333; }
+.main-content {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow-y: auto;
+}
+.top-bar {
+background-color: white;
+padding: 15px 30px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+border-bottom: 1px solid #e6e6e6;
+}
+.top-bar h2 { margin: 0; color: #333; font-size: 20px; }
+.top-bar p { margin: 0; color: #666; font-size: 14px; }
+.dashboard-body { padding: 30px; display: flex; gap: 20px; flex-wrap: wrap; }
+.card { background: white; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex: 1; min-width: 320px; }
+.card h3 { margin-top: 0; color: #222; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; font-size: 18px; }
+input[type="text"] { width: 100%; padding: 10px; margin: 12px 0; border: 1px solid #ccc; border-radius: 4px; }
+.btn-submit { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.btn-submit:hover { background-color: #0056b3; }
+.error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+.success { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+<div class="sidebar-brand">
+Gestion Scolaire v1.0
+</div>
+<ul class="sidebar-menu">
+<li><a href="/" class="menu-item">📁 Tableau de bord</a></li>
+<li class="menu-category">Données</li>
+<li>
+<span class="menu-item">📥 Importer</span>
+<ul class="submenu">
+<li><a href="/importer/classes" class="submenu-item">Classes</a></li>
+<li><a href="/importer/eleves" class="submenu-item">Élèves</a></li>
+</ul>
+</li>
+<li>
+<span class="menu-item">📤 Exporter</span>
+<ul class="submenu">
+<li><a href="/classe/rechercher" class="submenu-item">Recherche & Export par Classe</a></li>
+</ul>
+</li>
+<li class="menu-category">Scolarité</li>
+<li>
+<span class="menu-item">💰 Paiements</span>
+<ul class="submenu">
+<li><a href="#" class="submenu-item">Mensualités</a></li>
+<li><a href="#" class="submenu-item">Tenues</a></li>
+<li><a href="#" class="submenu-item">Divers</a></li>
+</ul>
+</li>
+</ul>
+<div class="sidebar-footer">
+<a href="/deconnexion" class="btn-logout">Se déconnecter</a>
+</div>
+</div>
+
+<div class="main-content">
+<div class="top-bar">
+<h2>🏫 {{ session['nom_ecole'] }}</h2>
+<p>Utilisateur connecté : <strong>{{ session['username'] }}</strong></p>
+</div>
+<div class="dashboard-body">
+<div style="width: 100%;">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="{{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+</div>
+<div class="card">
+<h3>Menu Principal</h3>
+<p>Votre session administrative a été ouverte avec succès.</p>
+<p>Utilisez les liens du menu situé à gauche pour naviguer entre l'importation de fichiers et le suivi des paiements scolaires.</p>
+</div>
+<div class="card">
+<h3>Sécurité du Réseau</h3>
+<p>Clé d'invitation active exigée pour l'ajout de nouveaux utilisateurs : 
+<strong style="color: #28a745; font-size: 16px;">{{ code_secret }}</strong>
+</p>
+<form action="/maj_code_secret" method="POST">
+<label for="NouveauCode">Générer une nouvelle clé d'accès masquée :</label>
+<input type="text" id="NouveauCode" name="NouveauCode" placeholder="Ex: CléUnique2026" required>
+<button type="submit" class="btn-submit">Mettre à jour la clé</button>
+</form>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue des Produits &amp; Matières</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1150px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #9b59b6; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-back:hover { background-color: #6c7a7d; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .btn-submit { background-color: #9b59b6; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 4; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #8e44ad; }
+        .btn-edit-mode { background-color: #3498db !important; }
+        .btn-edit-mode:hover { background-color: #2980b9 !important; }
+        .btn-cancel { display: none; background-color: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; grid-column: span 4; margin-top: -5px; }
+        .filter-print-zone { display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; }
+        .filter-box { display: flex; align-items: center; gap: 20px; }
+        .btn-print { background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-print:hover { background-color: #11151c; }
+            /* REDUCTION MAXIMALE DE LA HAUTEUR DES LIGNES */
+    /* --- COMPRESSION MAXIMALE DES LIGNES (STYLE TABLEUR) --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    table-layout: fixed; /* Évite les déformations de colonnes */
+}
+
+th, td {
+    padding: 3px 6px !important;    /* Padding ultra-réduit (3px haut/bas, 6px gauche/droite) */
+    height: 24px !important;       /* Force une hauteur de ligne très fine (24px au lieu de 32px) */
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;        /* Aligne parfaitement le texte au centre vertical */
+    font-size: 12px;               /* Écriture légèrement plus petite pour s'adapter à la finesse */
+    line-height: 1.2 !important;
+}
+
+th {
+    background-color: #1e2229;
+    color: white;
+    font-weight: bold;
+}
+
+/* Réduction de la taille des badges pour qu'ils ne débordent pas des lignes fines */
+.badge-categorie {
+    display: inline-block;
+    padding: 2px 8px !important;   /* Alvéoles et étiquettes plus serrées */
+    font-size: 11px !important;
+    font-weight: bold;
+    border-radius: 30px;
+    line-height: 1;
+}
+
+/* Bouton modifier plus compact */
+.btn-action-edit {
+    background-color: #f1c40f;
+    color: #1e2229;
+    border: 1px solid #d4ac0d;
+    padding: 2px 6px !important;   /* Bouton aminci pour tenir dans les 24px de hauteur */
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 11px;
+    transition: background 0.2s;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+
+        
+        th:nth-child(1), td:nth-child(1) { width: 10%; }
+        th:nth-child(2), td:nth-child(2) { width: 22%; }
+        th:nth-child(3), td:nth-child(3) { width: 14%; }
+        th:nth-child(4), td:nth-child(4) { width: 12%; }
+        th:nth-child(5), td:nth-child(5) { width: 12%; }
+        th:nth-child(6), td:nth-child(6) { width: 10%; }
+        th:nth-child(7), td:nth-child(7) { width: 12%; }
+        th:nth-child(8), td:nth-child(8) { width: 8%; }
+        
+        .action-column { text-align: center !important; vertical-align: middle !important; }
+        .btn-action-edit { background-color: #f1c40f; color: #1e2229; border: 1px solid #d4ac0d; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: background 0.2s; display: inline-block; }
+        .btn-action-edit:hover { background-color: #f39c12; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .badge-categorie { display: inline-block; padding: 5px 12px; font-size: 12px; font-weight: bold; border-radius: 30px; text-align: center; white-space: nowrap; }
+        .badge-cat-1 { background-color: #e8f8f5; color: #117a65; border: 1px solid #a3e4d7; }
+        .badge-cat-2 { background-color: #fef9e7; color: #b7950b; border: 1px solid #f9e79f; }
+        .badge-cat-3 { background-color: #ebf5fb; color: #2e86c1; border: 1px solid #aed6f1; }
+        .badge-cat-4 { background-color: #f4ecf7; color: #6c3483; border: 1px solid #d7bde2; }
+        .badge-cat-5 { background-color: #eaecee; color: #5d6d7e; border: 1px solid #bdc3c7; }
+
+        /* Écran normal : Le bloc d'en-tête entreprise est masqué */
+        .print-header { display: none; }
+
+/* =======================================================================
+   STABILISATION ET CORRECTION DE L'AFFICHAGE DES EN-TÊTES A L'IMPRESSION
+   ======================================================================= */
+@media print {
+    @page {
+        size: landscape; /* Demande le mode paysage au système */
+        margin: 8mm 10mm 8mm 10mm;
+    }
+
+    /* Forçage de la visibilité des couleurs d'en-têtes et arrière-plans */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        background-color: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        color: #000 !important;
+    }
+
+    .container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* Masquage des formulaires et éléments d'écran */
+    .header-block, form, #produitForm, .form-grid, .filter-print-zone, .print-hide, .pagination-block { 
+        display: none !important;
+    }
+
+    /* En-tête de l'entreprise */
+    div.print-header {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 8px !important;
+    }
+    .print-header-left { float: left; width: 50%; text-align: left; }
+    .print-header-right { float: right; width: 50%; text-align: right; }
+    .clear-fix { clear: both; }
+
+    /* Bannière résumé financier */
+    div[style*="background-color: #f4ecf7"] {
+        border: 1px solid #000 !important;
+        background-color: #fdfafb !important;
+        padding: 8px 12px !important;
+        margin-bottom: 15px !important;
+        display: block !important;
+    }
+
+    /* CORRECTION SÉCURISÉE DU TABLEAU COMPACT */
+    table {
+        display: table !important;
+        width: 100% !important;
+        border: 1px solid #000 !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+    }
+
+    /* Force l'affichage de la ligne d'en-tête */
+    thead {
+        display: table-header-group !important;
+    }
+    
+    tr {
+        display: table-row !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Style de l'en-tête noir visible */
+    th {
+        display: table-cell !important;
+        background-color: #1e2229 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: 1px solid #000 !important;
+        padding: 6px 8px !important;
+        font-size: 11px !important;
+    }
+
+    td {
+        display: table-cell !important;
+        border: 1px solid #000 !important;
+        padding: 5px 6px !important;
+        font-size: 11px !important;
+        color: #000000 !important;
+        word-wrap: break-word !important;
+    }
+
+    /* Alignement et dimension des colonnes */
+    th:nth-child(1), td:nth-child(1) { width: 10%; } /* ID Code */
+    th:nth-child(2), td:nth-child(2) { width: 24%; } /* Désignation */
+    th:nth-child(3), td:nth-child(3) { width: 16%; } /* Catégorie */
+    th:nth-child(4), td:nth-child(4) { width: 12%; text-align: right; } /* Prix Vente */
+    th:nth-child(5), td:nth-child(5) { width: 12%; text-align: right; } /* Prix Achat */
+    th:nth-child(6), td:nth-child(6) { width: 12%; text-align: center; } /* Stock */
+    th:nth-child(7), td:nth-child(7) { width: 14%; text-align: right; font-weight: bold; } /* Valeur */
+    th:nth-child(9), td:nth-child(9), .action-column { display: none !important; width: 0 !important; } /* Masque l'action */
+    th:nth-child(8), td:nth-child(8) { width: 14%; text-align: right; font-weight: bold; } /* Valeur */
+    .badge-categorie {
+        background: transparent !important;
+        color: black !important;
+        padding: 0 !important;
+        font-weight: bold !important;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+       <!-- En-tête pour impression PDF structurel avec floats (Sécurisé pour les moteurs de rendu PDF) -->
+<div class="print-header">
+  <div class="print-header-left">
+    <h1 style="margin: 0; font-size: 22px;">{{ entreprise.raison_sociale or 'Exploitation Avicole' }}</h1>
+    <p style="margin: 4px 0; font-size: 12px;">{{ entreprise.adresse or 'Ferme en location' }}</p>
+    <p style="margin: 2px 0; font-size: 12px;">Tél: {{ entreprise.telephone or '' }}</p>
+  </div>
+  <div class="print-header-right">
+    <h2 style="margin: 0; color: #333; font-size: 16px;">Registre des Achats &amp; Approvisionnements</h2>
+    <p style="margin: 5px 0 0 0; font-size: 11px; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+      Période : <span id="print_mois">--</span> / <span id="print_annee">----</span>
+    </p>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+        <!-- En-tête Écran -->
+        <div class="header-block">
+            <h2 id="form-title">⚙ Référentiel &amp; Catalogue des Produits</h2>
+            <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- FORMULAIRE CADRÉ PAR LES RÈGLES DE GESTION -->
+        <form action="{{ url_for('ajouter_produit') }}" method="POST" id="produitForm">
+            <input type="hidden" id="id_produit_modif" name="id_produit_modif" value="">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="designation">Désignation / Nom du Produit * :</label>
+                   <select id="designation" name="designation" required onchange="appliquerReglesGestion()">
+                     <option value="" disabled selected>-- Choisir un produit --</option>
+                      <!-- Catégorie 1 -->
+                        <option value="Maïs" data-cat="Matières premières" data-unit="Sac">Maïs (Sacs, kg)</option>
+                        <option value="Farine de poisson" data-cat="Matières premières" data-unit="Sac">Farine de poisson (Sacs, kg)</option>
+                         <option value="Tourteau d'arachide" data-cat="Matières premières" data-unit="Sac">Tourteau d'arachide (Sacs, kg)</option>
+                         <option value="Tourteau de soja" data-cat="Matières premières" data-unit="Sac">Tourteau de soja</option>
+                         <option value="Son de blé" data-cat="Matières premières" data-unit="Sac">Son de blé (Sacs, kg)</option>
+                         <option value="Produit fini" data-cat="Alimentation" data-unit="Kg">Son de Produit Fini (Consommation uniquement)</option>
+                         <option value="Aliments fabriqués" data-cat="Production" data-unit="Sac">Aliments fabriqués (Stock-Vente)</option>
+                         <option value="Poules de Réforme" data-cat="Production" data-unit="Unité">Poules de Réforme (Unité)</option>
+                         <option value="Poulets de chair" data-cat="Production" data-unit="Unité">Poulets de chair (Unité)</option>
+                         <option value="Œufs" data-cat="Production" data-unit="Unité">Œufs (Stock-Vente)</option>
+                         <option value="Œufs (Revente)" data-cat="Production" data-unit="Unité">Œufs (Achat-Vente)</option>
+                         <option value="Alvéoles" data-cat="Conditionnement" data-unit="Unité">Alvéoles (Stocks)</option>
+                         <option value="Cartons" data-cat="Conditionnement" data-unit="Unité">Cartons (Stocks)</option>
+                         <option value="Vaccins" data-cat="Produits vétérinaires" data-unit="Doses">Vaccins (Flacons/Doses)</option>
+                         <option value="Antibiotiques" data-cat="Produits vétérinaires" data-unit="Boîte">Antibiotiques (Stocks)</option>
+                         <option value="Vitamines" data-cat="Produits vétérinaires" data-unit="Sachet">Vitamines (Stocks)</option>
+                        </select>
+            </div>
+            <div class="form-group">
+                <label for="categorie">Catégorie d'article * :</label>
+                <select id="categorie" name="categorie" required>
+                    <option value="" disabled selected>-- Choisir --</option>
+                    <option value="Matières premières">Matières premières</option>
+                    <option value="Alimentation">Alimentation</option>
+                    <option value="Production">Production</option>
+                    <option value="Conditionnement">Conditionnement</option>
+                     <option value="Produits vétérinaires">Produits vétérinaires</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="unite">Unité * :</label>
+                <input type="text" id="unite" name="unite" placeholder="Ex: Sac, Kg, Unité" required>
+            </div>
+            <div class="form-group">
+                <label for="prix_vente">Prix de Vente Catalogue (FCFA) :</label>
+                <input type="number" id="prix_vente" name="prix_vente" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="prix_achat">Prix d'Achat Estimé / Coût (FCFA) :</label>
+                <input type="number" id="prix_achat" name="prix_achat" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="stock_initial">Stock Quantité :</label>
+                <input type="number" id="stock_initial" name="stock_initial" min="0" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label for="date_enregistrement">Date * :</label>
+                <input type="date" id="date_enregistrement" name="date_enregistrement" required>
+            </div>
+                    <!-- BOUTON DU FORMULAIRE D'ENREGISTREMENT -->
+        <button type="submit" id="submitBtn" class="btn-submit">Enregistrer le Produit</button>
+        <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">Annuler la modification</button>
+    </div>
+</form> <!-- FIN DU FORMULAIRE D'ENREGISTREMENT -->
+
+
+<!-- ⚙ ZONE DE FILTRAGE SERVEUR FORMULAIRE AUTOMATIQUE -->
+<div class="filter-print-zone" style="background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-top: 25px; margin-bottom: 20px; border: 1px solid #cfd9db; display: block !important;">
+    <form method="GET" action="{{ url_for('liste_produits') }}" style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 25px; width: 100%; flex-wrap: wrap; margin: 0;">
+        
+        <!-- FILTRE MOIS -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="margin: 0; font-size: 14px; font-weight: bold; color: #2c3e50;">Filtrer :</label>
+            <select name="filter_mois" onchange="this.form.submit()" style="padding: 6px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; background: white; height: 32px;">
+                <option value="01" {% if mois_sel == '01' %}selected{% endif %}>Janvier</option>
+                <option value="02" {% if mois_sel == '02' %}selected{% endif %}>Février</option>
+                <option value="03" {% if mois_sel == '03' %}selected{% endif %}>Mars</option>
+                <option value="04" {% if mois_sel == '04' %}selected{% endif %}>Avril</option>
+                <option value="05" {% if mois_sel == '05' %}selected{% endif %}>Mai</option>
+                <option value="06" {% if mois_sel == '06' %}selected{% endif %}>Juin</option>
+                <option value="07" {% if mois_sel == '07' %}selected{% endif %}>Juillet</option>
+                <option value="08" {% if mois_sel == '08' %}selected{% endif %}>Août</option>
+                <option value="09" {% if mois_sel == '09' %}selected{% endif %}>Septembre</option>
+                <option value="10" {% if mois_sel == '10' %}selected{% endif %}>Octobre</option>
+                <option value="11" {% if mois_sel == '11' %}selected{% endif %}>Novembre</option>
+                <option value="12" {% if mois_sel == '12' %}selected{% endif %}>Décembre</option>
+            </select>
+        </div>
+
+        <!-- FILTRE ANNÉE -->
+        <div>
+            <select name="filter_annee" onchange="this.form.submit()" style="padding: 6px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; background: white; height: 32px;">
+                {% for annee in liste_annees %}
+                    <option value="{{ annee }}" {% if annee_sel == annee|string %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- FILTRE CATÉGORIE -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <select name="filter_categorie" onchange="this.form.submit()" style="padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; background: white; height: 32px;">
+                <option value="">-- Toutes les catégories --</option>
+                <option value="Matières premières" {% if cat_sel == 'Matières premières' %}selected{% endif %}>Matières premières</option>
+                <option value="Alimentation" {% if cat_sel == 'Alimentation' %}selected{% endif %}>Alimentation</option>
+                <option value="Production" {% if cat_sel == 'Production' %}selected{% endif %}>Production</option>
+                <option value="Conditionnement" {% if cat_sel == 'Conditionnement' %}selected{% endif %}>Conditionnement</option>
+                <option value="Produits vétérinaires" {% if cat_sel == 'Produits vétérinaires' %}selected{% endif %}>Produits vétérinaires</option>
+            </select>
+        </div>
+
+        <!-- BOUTONS D'ACTION ALIGNÉS TOUT À DROITE -->
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+            <button type="button" class="btn-print print-hide" style="padding: 0 15px; background-color: #1e2229; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; height: 34px; display: flex; align-items: center; justify-content: center;" onclick="window.print()">Imprimer la liste</button>
+            <button type="button" class="btn-print print-hide" style="padding: 0 15px; background-color: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; height: 34px; display: flex; align-items: center; justify-content: center;" onclick="exporterProduitsExcel()">Exporter vers Excel</button>
+        </div>
+    </form>
+</div>
+
+<!-- ⚙ RÉSUMÉ FINANCIER DU STOCK FILTRÉ -->
+<div style="background-color: #f4ecf7; border: 1px solid #e8daef; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <strong style="color: #6c3483; font-size: 14px;">⚙ Résumé Filtré</strong>
+        <div style="font-size: 11px; color: #555; margin-top: 2px;">Références uniques dans la période : <strong>{{ total_articles }}</strong></div>
+    </div>
+    <div style="text-align: right;">
+        <span style="font-size: 16px; font-weight: bold; color: #7d3c98;">Valeur Estimée Réelle : {{ valeur_stock }} FCFA</span>
+    </div>
+</div>
+
+<!-- ⚙ TABLEAU DES ARTICLES PAGINÉ ET COORDONNÉ -->
+<table>
+    <thead>
+        <tr>
+            <th style="width: 10%;">ID Code</th>
+            <th style="width: 20%;">Désignation de l'article</th>
+            <th style="width: 14%;">Catégorie</th>
+            <th style="width: 11%;">Prix Vente Cat.</th>
+            <th style="width: 11%;">Prix Achat Réc.</th>
+            <th style="width: 12%; text-align: center;">Stock Dispo.</th>
+            <th style="width: 12%;">Valeur Globale</th>
+            <th style="width: 10%;">Opérateur</th>
+            <th class="action-column" style="width: 10%;">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if produits %}
+            {% for p in produits %}
+                <tr class="ligne-produit">
+                    <td style="color: #7f8c8d; font-weight: bold;">#PROD-{{ p.id_produit }}</td>
+                    <td id="des-{{ p.id_produit }}"><strong>{{ p.designation }}</strong></td>
+                    <td>
+                        {% if p.categorie == 'Matières premières' %}
+                            <span id="cat-{{ p.id_produit }}" class="badge-categorie badge-cat-1">{{ p.categorie }}</span>
+                        {% elif p.categorie == 'Alimentation' %}
+                            <span id="cat-{{ p.id_produit }}" class="badge-categorie badge-cat-2">{{ p.categorie }}</span>
+                        {% elif p.categorie == 'Production' %}
+                            <span id="cat-{{ p.id_produit }}" class="badge-categorie badge-cat-3">{{ p.categorie }}</span>
+                        {% elif p.categorie == 'Conditionnement' %}
+                            <span id="cat-{{ p.id_produit }}" class="badge-categorie badge-cat-4">{{ p.categorie }}</span>
+                        {% else %}
+                            <span id="cat-{{ p.id_produit }}" class="badge-categorie badge-cat-5">{{ p.categorie }}</span>
+                        {% endif %}
+                    </td>
+                    <td><span id="px-{{ p.id_produit }}">{{ p.prix_vente|int or 0 }}</span> FCFA</td>
+                    <td>
+                        {% if p.prix_achat and p.prix_achat > 0 %}
+                            <span>{{ p.prix_achat|int }}</span> FCFA
+                        {% elif p.prix_achat_moyen and p.prix_achat_moyen > 0 %}
+                            <span>{{ p.prix_achat_moyen|int }}</span> FCFA
+                        {% else %}
+                            <span style="color: #7f8c8d; font-style: italic;">0</span> FCFA
+                        {% endif %}
+                    </td>
+                    <td style="background-color: #fff2cc; font-weight: bold; text-align: center; border: 1px solid #f1c40f; color: #b78a00;">
+                        <span id="stk-{{ p.id_produit }}">{{ p.stock or 0 }}</span> <span id="unt-{{ p.id_produit }}">{{ p.unite }}</span>
+                    </td>
+                    <td style="font-weight: bold; color: #2c3e50;">
+                        {% if p.categorie in ['Alimentation', 'Conditionnement', 'Produits vétérinaires'] %}
+                            {{ ((p.stock or 0) * (p.prix_achat_moyen or p.prix_achat or 0.0)) | round(0) | int }} FCFA
+                        {% else %}
+                            {{ ((p.stock or 0) * (p.prix_vente or 0.0)) | round(0) | int }} FCFA
+                        {% endif %}
+                    </td>
+                    <!-- CELLULE OPÉRATEUR AJOUTÉE -->
+                    <td><span style="font-size: 11px; font-weight: bold; color: #2980b9;">@{{ p.user.NomUtilisateur if p.user else 'Système' }}</span></td>
+                    <td class="action-column">
+                        <button type="button" class="btn-action-edit" onclick="chargerDonneesProduit('{{ p.id_produit }}', '{{ p.prix_achat or p.prix_achat_moyen or 0 }}')">✏ Modifier</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="9" style="text-align: center; color: #7f8c8d; padding: 20px; font-weight: bold; background: #fafafa;">ℹ Aucun article enregistré pour cette période.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+<!-- BLOC DE NAVIGATION DE LA PAGINATION CATALOGUE -->
+<div class="pagination-block print-hide" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 25px 0 10px 0; padding-top: 15px; border-top: 1px solid #ebebeb;">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('liste_produits', page=pagination.prev_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_categorie=cat_sel) }}" style="background-color: white; color: #2c3e50; padding: 7px 14px; text-decoration: none; border: 1px solid #cfd9db; border-radius: 4px; font-size: 13px; font-weight: bold;">« Précédent</a>
+    {% else %}
+        <span style="background-color: #f8f9fa; color: #bdc3c7; padding: 7px 14px; border: 1px solid #e5e8e8; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: not-allowed;">« Précédent</span>
+    {% endif %}
+
+    <span style="font-size: 13px; color: #7f8c8d; margin: 0 10px;">Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} fiches répertoriées)</span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('liste_produits', page=pagination.next_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_categorie=cat_sel) }}" style="background-color: white; color: #2c3e50; padding: 7px 14px; text-decoration: none; border: 1px solid #cfd9db; border-radius: 4px; font-size: 13px; font-weight: bold;">Suivant »</a>
+    {% else %}
+        <span style="background-color: #f8f9fa; color: #bdc3c7; padding: 7px 14px; border: 1px solid #e5e8e8; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: not-allowed;">Suivant »</span>
+    {% endif %}
+</div>
+</div>
+
+<!-- CODE JAVASCRIPT TECHNIQUE UNIQUE -->
+<script>
+function appliquerReglesGestion() {
+    const selectProd = document.getElementById('designation');
+    if (!selectProd) return;
+    const selectedOption = selectProd.options[selectProd.selectedIndex];
+    if (selectedOption && !selectedOption.disabled && selectedOption.value !== "") {
+        const categorieAssociee = selectedOption.getAttribute('data-cat');
+        const uniteAssociee = selectedOption.getAttribute('data-unit');
+        document.getElementById('categorie').value = categorieAssociee;
+        document.getElementById('unite').value = uniteAssociee;
+    } else {
+        document.getElementById('categorie').value = "";
+        document.getElementById('unite').value = "";
+    }
+}
+
+function chargerDonneesProduit(id, prixAchatDirect) {
+    document.getElementById('form-title').innerText = "✏ Modifier le Produit #" + id;
+    document.getElementById('submitBtn').innerText = "Mettre à jour le Produit";
+    document.getElementById('submitBtn').classList.add('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "block";
+    
+    var designation = document.getElementById('des-' + id).innerText.trim();
+    var celluleBadge = document.getElementById('cat-' + id);
+    var categorie = celluleBadge ? celluleBadge.textContent.trim() : "";
+    var prixVente = document.getElementById('px-' + id).innerText.trim();
+    var stock = document.getElementById('stk-' + id).innerText.trim();
+    var unite = document.getElementById('unt-' + id).innerText.trim();
+    
+    document.getElementById('id_produit_modif').value = id;
+    document.getElementById('designation').value = designation;
+    document.getElementById('categorie').value = categorie;
+    document.getElementById('unite').value = unite;
+    document.getElementById('prix_vente').value = parseFloat(prixVente) || 0;
+    document.getElementById('stock_initial').value = parseInt(stock) || 0;
+    
+    var champPrixAchat = document.getElementById('prix_achat');
+    if (champPrixAchat) {
+        champPrixAchat.value = parseFloat(prixAchatDirect) || 0;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function annulerModification() {
+    document.getElementById('form-title').innerText = "⚙ Référentiel & Catalogue des Produits";
+    document.getElementById('submitBtn').innerText = "Enregistrer le Produit";
+    document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "none";
+    document.getElementById('produitForm').reset();
+    document.getElementById('id_produit_modif').value = "";
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('date_enregistrement').value = today;
+    appliquerReglesGestion();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInput = document.getElementById('date_enregistrement');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    var printMois = document.getElementById('print_mois');
+    var printAnnee = document.getElementById('print_annee');
+    if (printMois) printMois.innerText = "{{ mois_sel }}";
+    if (printAnnee) printAnnee.innerText = "{{ annee_sel }}";
+});
+
+function exporterProduitsExcel() {
+    var table = document.querySelector("table");
+    if (!table) return;
+    var csv = [];
+    var rows = table.querySelectorAll("tr");
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var cols = row.querySelectorAll("th, td");
+        var rowData = [];
+        // On prend les 7 premières colonnes (on ignore l'action modifier)
+        for (var j = 0; j < 7; j++) {
+            if (cols[j]) {
+                var text = cols[j].innerText.trim();
+                if (i > 0 && j >= 3) {
+                    text = text.replace(/FCFA/gi, "").replace(/Sac/gi, "").replace(/Kg/gi, "").replace(/Unité/gi, "").replace(/\s+/g, "").trim().replace('.', ',');
+                }
+                text = text.replace(/"/g, '""');
+                rowData.push('"' + text + '"');
+            }
+        }
+        csv.push(rowData.join(";"));
+    }
+    var csvString = "\uFEFF" + csv.join("\n");
+    var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    var link = document.createElement("a");
+    if (link.download !== undefined) {
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", "catalogue_produits_filtre.csv");
+        link.click();
+    }
+}
+
+</script>
+</body>
+</html>

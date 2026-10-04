@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clôture Mensuelle de la Paie - PROMAS</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1550px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .filter-box { background: #f8f9fa; padding: 15px 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
+        .filter-group { display: flex; flex-direction: column; width: 200px; }
+        .filter-group label { font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #2c3e50; }
+        .filter-group select, .filter-group input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; }
+        th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid #ddd; font-size: 12px; vertical-align: middle; }
+        th { background-color: #34495e; color: white; font-weight: bold; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        tr:hover { background-color: #f1f4f6; }
+        .input-money { padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 90px; font-size: 12px; text-align: right; box-sizing: border-box; display: block; margin-bottom: 3px; }
+        .label-sub { font-size: 9px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .value-display { font-size: 12px; font-weight: bold; color: #2c3e50; display: block; }
+        .btn-action-pay { background-color: #27ae60; color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        .btn-action-pay:hover { background-color: #219653; }
+        .btn-print-bs { background-color: #2980b9; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase; text-align: center; }
+        .btn-print-bs:hover { background-color: #2471a3; }
+        .badge-paid { background-color: #2ecc71; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; text-transform: uppercase; display: inline-block; text-align: center; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="header-block">
+    <div>
+        <h2>Clôture Mensuelle de la Paie &amp; Régularisations Sénégal</h2>
+        <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 13px;">Imputation individualisée avec colonnes de retenues IPRES, IPM, Impôts et Acomptes séparées</p>
+    </div>
+    <div style="display: inline-flex; align-items: center; gap: 10px;">
+        <a href="/paies/bulletins/tout/{{ periode_actuelle }}" target="_blank" class="btn-print-bs" style="background-color: #27ae60; padding: 10px 18px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 11px;">Imprimer tous les BS</a>
+        
+        <!-- 📊 BOUTON EXCEL COUPLÉ À LA PÉRIODE ACTIVE -->
+        <a href="{{ url_for('exporter_paies_excel', periode=periode_actuelle) }}" class="no-print" style="background-color: #1e2229; color: white; padding: 10px 18px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; height: 35px; box-sizing: border-box; text-transform: uppercase; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#2c3e50'" onmouseout="this.style.backgroundColor='#1e2229'">
+            📊 Exporter l'état (Excel)
+        </a>
+        
+        <a href="{{ url_for('list_employes') }}" class="btn-back" style="padding: 10px 18px; font-size: 11px; text-transform: uppercase; display: inline-flex; align-items: center; height: 35px; box-sizing: border-box;">← Registre Personnel</a>
+    </div>
+</div>
+
+    <div class="filter-box no-print">
+        <div class="filter-group">
+            <label for="periode_selectionnee">Période Mensuelle :</label>
+            <input type="month" id="periode_selectionnee" value="{{ periode_actuelle }}" onchange="filtrerPeriodePaie(this.value)">
+        </div>
+        <div class="filter-group" style="flex-grow: 1; width: auto;">
+            <label for="searchBar">Rechercher un employé :</label>
+            <input type="text" id="searchBar" placeholder="Saisissez un nom ou un matricule...">
+        </div>
+        <div style="margin-left: auto; text-align: right; background: #2c3e50; color: white; padding: 10px 20px; border-radius: 4px;">
+            <span style="font-size: 11px; display: block; opacity: 0.8; text-transform: uppercase;">Mois Comptable Actif</span>
+            <strong style="font-size: 16px; font-family: monospace;">{{ periode_actuelle }}</strong>
+        </div>
+    </div>
+
+    <table id="tablePaies">
+        <thead>
+            <tr>
+                <th style="width: 15%;">Employé</th>
+                <th style="width: 11%;">Poste &amp; Base</th>
+                <th style="width: 12%;">Primes / Ind. (+)</th>
+                <th style="width: 10%;">IPRES (-)</th>
+                <th style="width: 10%;">IPM (-)</th>
+                <th style="width: 10%;">Impôt IR (-)</th>
+                <th style="width: 11%;">Acomptes / Ret. (-)</th>
+                <th style="text-align: center; width: 21%;">État &amp; Action Comptable</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if liste_paies %}
+            {% for item in liste_paies %}
+            <tr class="paie-row">
+                <td>
+                    <strong class="emp-name">{{ item.employe.prenom }} {{ item.employe.nom }}</strong>
+                    <br><small class="emp-matricule" style="color: #7f8c8d;">{{ item.employe.matricule }}</small>
+                </td>
+                
+                <td>
+                    <span style="color: #2c3e50; font-weight: 500;">{{ item.poste }}</span><br>
+                    <strong>{{ "{:,.0f}".format(item.salaire_forfaitaire).replace(",", " ") }} F</strong>
+                </td>
+                
+                {% if not item.paie %}
+                <!-- ================= CAS A : PREMIÈRE CRÉATION / SAISIE DE LA PAIE ================= -->
+                <form action="/paies/calculer" method="POST">
+                    <input type="hidden" name="id_employe" value="{{ item.employe.id_employe }}">
+                    <input type="hidden" name="periode" value="{{ periode_actuelle }}">
+                    <td>
+                        <span class="label-sub">Prime :</span>
+                        <input type="number" class="input-money" name="prime" value="0" min="0">
+                        <span class="label-sub">Indemnité :</span>
+                        <input type="number" class="input-money" name="indemnite" value="0" min="0">
+                    </td>
+                    <td>
+                        <input type="number" class="input-money" name="ipres" value="0" min="0">
+                    </td>
+                    <td>
+                        <input type="number" class="input-money" name="assurance" value="0" min="0">
+                    </td>
+                    <td>
+                        <input type="number" class="input-money" name="impot" value="0" min="0">
+                    </td>
+                    <td>
+                        <span class="label-sub">Acompte :</span>
+                        <input type="number" class="input-money" name="avance" value="0" min="0">
+                        <span class="label-sub">Retenue :</span>
+                        <input type="number" class="input-money" name="retenue" value="0" min="0">
+                    </td>
+                    <td style="text-align: center;">
+                        <button type="submit" class="btn-action-pay" style="padding: 10px 14px;">Clôturer la paie</button>
+                    </td>
+                </form>
+                {% else %}
+                <!-- ================= CAS B : PAIE EXISTANTE VALIDÉE (MODIFICATIONS SÉPARÉES) ================= -->
+                <td style="display: none;">
+                    <form action="/paies/modifier/{{ item.paie.id_paie }}" method="POST" id="form-edit-{{ item.paie.id_paie }}"></form>
+                </td>
+                
+                <!-- Colonne Primes / Indemnités -->
+                <td>
+                    <div class="view-mode-{{ item.paie.id_paie }}">
+                        <span class="label-sub">Pri:</span> <span class="value-display">{{ "{:,.0f}".format(item.prime).replace(",", " ") }} F</span>
+                        <span class="label-sub">Ind:</span> <span class="value-display">{{ "{:,.0f}".format(item.indemnite).replace(",", " ") }} F</span>
+                    </div>
+                    <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none;">
+                        <span class="label-sub">Prime :</span><input type="number" class="input-money" name="prime" value="{{ item.prime | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                        <span class="label-sub">Indem. :</span><input type="number" class="input-money" name="indemnite" value="{{ item.indemnite | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                    </div>
+                </td>
+                
+                <!-- Colonne IPRES -->
+                <td>
+                    <div class="view-mode-{{ item.paie.id_paie }}">
+                        <span class="value-display">{{ "{:,.0f}".format(item.ipres).replace(",", " ") }} F</span>
+                    </div>
+                        <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none;">
+                        <input type="number" class="input-money" name="ipres" value="{{ item.ipres | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                    </div>
+                </td>
+                
+                <!-- Colonne IPM -->
+                <td>
+                    <div class="view-mode-{{ item.paie.id_paie }}">
+                        <span class="value-display">{{ "{:,.0f}".format(item.assurance).replace(",", " ") }} F</span>
+                    </div>
+                    <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none;">
+                        <input type="number" class="input-money" name="assurance" value="{{ item.assurance | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                    </div>
+                </td>
+                
+                <!-- Colonne Impôt IR -->
+                <td>
+                    <div class="view-mode-{{ item.paie.id_paie }}">
+                        <span class="value-display">{{ "{:,.0f}".format(item.impot).replace(",", " ") }} F</span>
+                    </div>
+                    <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none;">
+                        <input type="number" class="input-money" name="impot" value="{{ item.impot | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                    </div>
+                </td>
+                
+                <!-- Colonne Acomptes & Retenues Diverses -->
+                <td>
+                    <div class="view-mode-{{ item.paie.id_paie }}">
+                        <span class="label-sub">Acompte:</span> <span class="value-display" style="color: #c0392b;">-{{ "{:,.0f}".format(item.avance).replace(",", " ") }} F</span>
+                        <span class="label-sub">Retenue:</span> <span class="value-display" style="color: #c0392b;">-{{ "{:,.0f}".format(item.retenue).replace(",", " ") }} F</span>
+                    </div>
+                    <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none;">
+                        <span class="label-sub">Acompte :</span><input type="number" class="input-money" name="avance" value="{{ item.avance | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                        <span class="label-sub">Retenue :</span><input type="number" class="input-money" name="retenue" value="{{ item.retenue | int }}" form="form-edit-{{ item.paie.id_paie }}">
+                    </div>
+                </td>
+                
+                <!-- Boutons d'actions comptables en ligne -->
+                <td style="text-align: center;">
+                    <div class="view-mode-{{ item.paie.id_paie }}" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="badge-paid">Validée</span>
+                        <button type="button" class="btn-print-bs" style="background-color: #e67e22; border: none; cursor: pointer;" onclick="activerEdition('{{ item.paie.id_paie }}')">Modifier</button>
+                        <a href="/paies/bulletin/{{ item.paie.id_paie }}" target="_blank" class="btn-print-bs">Voir BS</a>
+                    </div>
+                    <div class="edit-mode-{{ item.paie.id_paie }}" style="display: none; justify-content: center; align-items: center; gap: 6px;">
+                        <button type="submit" class="btn-action-pay" style="background-color: #2980b9;" form="form-edit-{{ item.paie.id_paie }}">Sauver</button>
+                        <button type="button" class="btn-back" style="padding: 5px 10px;" onclick="annulerEdition('{{ item.paie.id_paie }}')">X</button>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 40px; font-style: italic;">Aucun employé éligible trouvé.</td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <!-- SYSTEME DE PAGINATION NATIVE DU JOURNAL DES PAIES -->
+<div class="no-print" style="margin-top: 20px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; font-family: 'Segoe UI', Arial, sans-serif;">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('gestion_paies', page=pagination.prev_num, periode=periode_actuelle) }}" style="padding: 8px 16px; background-color: #34495e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; transition: background 0.2s;">« Précédent</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: not-allowed;">« Précédent</span>
+    {% endif %}
+
+    <span style="font-size: 13px; color: #2c3e50; font-weight: 500;">
+        Page <strong>{{ pagination.page }}</strong> sur <strong>{{ pagination.pages }}</strong>
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('gestion_paies', page=pagination.next_num, periode=periode_actuelle) }}" style="padding: 8px 16px; background-color: #34495e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; transition: background 0.2s;">Suivant »</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: not-allowed;">Suivant »</span>
+    {% endif %}
+</div>
+
+</div>
+
+<script>
+function filtrerPeriodePaie(valeurPeriode) {
+    window.location.href = "/paies?periode=" + valeurPeriode;
+}
+
+function activerEdition(id) {
+    document.querySelectorAll('.view-mode-' + id).forEach(function(el) {
+        el.style.setProperty('display', 'none', 'important');
+    });
+    document.querySelectorAll('.edit-mode-' + id).forEach(function(el) {
+        if (el.style.justifyContent === 'center' || el.style.display === 'flex') {
+            el.style.setProperty('display', 'flex', 'important');
+        } else {
+            el.style.setProperty('display', 'block', 'important');
+        }
+    });
+}
+
+function annulerEdition(id) {
+    document.querySelectorAll('.edit-mode-' + id).forEach(function(el) {
+        el.style.setProperty('display', 'none', 'important');
+    });
+    document.querySelectorAll('.view-mode-' + id).forEach(function(el) {
+        if (el.style.alignItems === 'center' || el.style.justifyContent === 'center') {
+            el.style.setProperty('display', 'flex', 'important');
+        } else {
+            el.style.setProperty('display', 'block', 'important');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var searchBar = document.getElementById('searchBar');
+    if (searchBar) {
+        searchBar.addEventListener('keyup', function() {
+            var filtre = searchBar.value.toLowerCase().trim();
+            var lignes = document.querySelectorAll('.paie-row');
+            lignes.forEach(function(ligne) {
+                var nom = ligne.querySelector('.emp-name') ? ligne.querySelector('.emp-name').innerText.toLowerCase() : "";
+                var matricule = ligne.querySelector('.emp-matricule') ? ligne.querySelector('.emp-matricule').innerText.toLowerCase() : "";
+                if (nom.includes(filtre) || matricule.includes(filtre)) {
+                    ligne.style.display = "";
+                } else {
+                    ligne.style.display = "none";
+                }
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>

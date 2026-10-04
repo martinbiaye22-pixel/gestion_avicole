@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exportation des Élèves par Classe</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f4f4f9; }
+        .container { max-width: 900px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        select { padding: 8px; width: 320px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; margin-bottom: 15px; display: block; }
+        .btn-green { padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
+        .btn-green:hover { background-color: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #1e2229; color: white; }
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .success { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        a { color: #002266; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔍 Recherche et Exportation par Classe</h2>
+        <p><a href="/">⬅️ Retour au tableau de bord</a></p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/classe/rechercher" method="POST">
+            <div class="form-group">
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">Sélectionner la classe via son Code :</label>
+                <select name="code_classe" required>
+                    <option value="">-- Choisir une classe --</option>
+                    {% for classe in classes %}
+                        <option value="{{ classe.CodeClasses }}" {% if code_classe == classe.CodeClasses %}selected{% endif %}>
+                            {{ classe.CodeClasses }} - {{ classe.NomClasse }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-green">Afficher la liste des élèves</button>
+        </form>
+
+        {% if code_classe %}
+        <h3>📋 Registre des Élèves de la classe : {{ code_classe }}</h3>
+        
+        {% if eleves %}
+        <div style="margin-bottom: 15px;">
+            <a href="{{ url_for('exporter_classe_excel', code_classe=code_classe) }}" class="btn-green">
+                📥 Lancer l'exportation Excel
+            </a>
+        </div>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Prénom</th>
+                    <th>Nom</th>
+                    <th>Date de Naissance</th>
+                    <th>Lieu de Naissance</th>
+                    <th>Nom de la classe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eleve in eleves %}
+                <tr>
+                    <td>{{ eleve.Prenom }}</td>
+                    <td>{{ eleve.Nom }}</td>
+                    <td>{{ eleve.Date_Naissance.strftime('%d/%m/%Y') if eleve.Date_Naissance else '' }}</td>
+                    <td>{{ eleve.Lieu_Naissance }}</td>
+                    <td><strong>{{ eleve.NomClasse }}</strong></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #777;">Aucun élève trouvé pour cette classe.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+</body>
+</html>

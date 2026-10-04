@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registre du Personnel - PROMAS</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-print { background-color: #1e2229; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-left: 10px; }
+        .btn-print:hover { background-color: #11151c; }
+        .btn-action-edit { background-color: #e67e22; color: white; border: none; padding: 4px 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* FORMULAIRE DE SAISIE AVEC GRILLE COMPACTE */
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .btn-submit { background-color: #27ae60; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 4; transition: background 0.2s; }
+        
+        /* TABLEAU */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
+        th { background-color: #2c3e50; color: white; font-weight: bold; }
+        tr:hover { background-color: #128ada; }
+        
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* COUCHE STYLE POUR L'IMPRESSION */
+        .print-header { display: none; margin-bottom: 25px; border-bottom: 3px double #333; padding-bottom: 15px; }
+        @media print {
+            @page { size: landscape; margin: 1cm; }
+            body { background-color: white; padding: 0; margin: 0; color: #000 !important; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
+            .header-block, form, .btn-print, h2:nth-of-type(1), .action-column, .no-print { display: none !important; } 
+            .print-header { display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; margin-bottom: 20px !important; }
+            table { display: table !important; width: 100% !important; border: 1px solid #333 !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th { background-color: #000000 !important; color:white  !important; border-bottom: 2px solid #000 !important; }
+            th, td { padding: 10px !important; border: 1px solid #333 !important; font-size: 11px !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    
+    <!-- EN-TÊTE IMPRESSION DYNAMIQUE -->
+    <div class="print-header">
+        <div>
+            <h1 style="margin: 0; font-size: 22px; font-weight: bold;">
+                {{ entreprise.raison_sociale if entreprise and entreprise.raison_sociale else 'PROMAS Aviculture' }}
+            </h1>
+            <p style="margin: 4px 0; font-size: 12px;">
+                {{ entreprise.adresse if entreprise and entreprise.adresse else 'Dakar, Sénégal' }}
+            </p>
+            <p style="margin: 2px 0; font-size: 12px;">
+                Tél: {{ entreprise.telephone if entreprise and entreprise.telephone else '+221 77 345 69 34' }}
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <h2 style="margin: 0; color: #333; font-size: 18px; font-weight: bold;">Registre Officiel du Personnel</h2>
+            <p style="margin: 5px 0 0 0; font-size: 11px; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                Imprimé le : {{ datetime_actuelle.strftime('%d/%m/%Y à %H:%M') }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Messages Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- En-tête Écran -->
+    <div class="header-block">
+        <div>
+            <h2>📋 Registre Chronologique des Employés</h2>
+            <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 13px;">
+                {% if est_admin %} 
+                    Mode Administrateur : Vue globale du personnel 
+                {% else %} 
+                    Mode Employé : Accès restreint à vos informations personnelles 
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('exporter_employes_excel') }}" style="background-color: #27ae60; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; height: 38px; box-sizing: border-box; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#219653'" onmouseout="this.style.backgroundColor='#27ae60'">
+            📊 Exporter Excel
+        </a>
+            <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+            <!-- 📊 BOUTON EXPORTER AJOUTÉ À CÔTÉ -->
+        
+        </div>
+    </div>
+
+    <!-- FORMULAIRE DE SAISIE POUR L'ADMINISTRATEUR -->
+    {% if est_admin %}
+        <h2 id="form-title">➕ Enregistrer un nouvel employé</h2>
+        <form action="{{ url_for('ajouter_employe') }}" method="POST" id="employeForm" style="margin-top: 15px;">
+            <div class="form-grid">
+                
+                <!-- Identifiant automatique caché (Assure la traçabilité de l'auteur) -->
+                <input type="hidden" id="id_user" name="id_user" value="{{ session.get('user_id') }}">
+
+                <div class="form-group">
+                    <label for="cin">N° CIN * :</label>
+                    <input type="text" id="cin" name="cin" placeholder="Ex: 1 234 1995 00123" required>
+                </div>
+                <div class="form-group">
+                    <label for="prenom">Prénom * :</label>
+                    <input type="text" id="prenom" name="prenom" placeholder="Ex: Amadou" required>
+                </div>
+                <div class="form-group">
+                    <label for="nom">Nom * :</label>
+                    <input type="text" id="nom" name="nom" placeholder="Ex: Ndiaye" required>
+                </div>
+                <div class="form-group">
+                    <label for="date_naissance">Date de Naissance * :</label>
+                    <input type="date" id="date_naissance" name="date_naissance" required>
+                </div>
+                <div class="form-group">
+                    <label for="lieu_naissance">Lieu de Naissance * :</label>
+                    <input type="text" id="lieu_naissance" name="lieu_naissance" placeholder="Ex: Rufisque" required>
+                </div>
+                <div class="form-group">
+                    <label for="telephone">Téléphone :</label>
+                    <input type="tel" id="telephone" name="telephone" placeholder="Ex: +221 ...">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="adresse">Adresse Résidentielle :</label>
+                    <input type="text" id="adresse" name="adresse" placeholder="Ex: Bambilor">
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit">Générer le Matricule & Créer la Fiche</button>
+                <button type="button" id="cancelBtn" style="display: none; background-color: #7f8c8d; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 4; margin-top: -5px;" onclick="annulerModification()">Annuler la modification</button>
+            </div>
+        </form>
+    {% endif %}
+
+    <!-- BARRE DE RECHERCHE DYNAMIQUE DES EMPLOYÉS -->
+    <div class="no-print" style="background: #ffffff; border: 1px solid #e6e6e6; padding: 15px 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin: 25px 0 15px 0; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+            <label for="searchBar" style="font-weight: bold; color: #2c3e50; font-size: 14px; white-space: nowrap;">Rechercher un employé :</label>
+            <input type="text" id="searchBar" placeholder="Tapez un nom ou un numéro de téléphone..." style="flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+        </div>
+        <button type="button" id="btnSearch" style="background-color: #1e2229; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: background 0.2s;">🔍 Rechercher</button>
+        <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimer la liste</button>
+    </div>
+
+    <!-- Tableau de Données -->
+    <h2 style="margin-top: 20px;">📋 Liste du Personnel</h2>
+    <table>
+        <style>
+    /* Style pour rendre les liens de tri discrets et visuels */
+    th a {
+        color: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    th a:hover {
+        text-shadow: 0 0 4px rgba(255,255,255,0.6);
+    }
+</style>
+
+<thead>
+    <tr>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='matricule', ordre='asc' if tri_par == 'matricule' and ordre == 'desc' else 'desc') }}">
+                Matricule {% if tri_par == 'matricule' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='cin', ordre='asc' if tri_par == 'cin' and ordre == 'desc' else 'desc') }}">
+                CIN {% if tri_par == 'cin' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>Enregistré Par</th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='nom', ordre='asc' if tri_par == 'nom' and ordre == 'desc' else 'desc') }}">
+                Nom Complet {% if tri_par == 'nom' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='date_naissance', ordre='asc' if tri_par == 'date_naissance' and ordre == 'desc' else 'desc') }}">
+                Date Naissance {% if tri_par == 'date_naissance' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='lieu_naissance', ordre='asc' if tri_par == 'lieu_naissance' and ordre == 'desc' else 'desc') }}">
+                Lieu Naissance {% if tri_par == 'lieu_naissance' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='telephone', ordre='asc' if tri_par == 'telephone' and ordre == 'desc' else 'desc') }}">
+                Téléphone {% if tri_par == 'telephone' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='adresse', ordre='asc' if tri_par == 'adresse' and ordre == 'desc' else 'desc') }}">
+                Adresse {% if tri_par == 'adresse' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        <th>
+            <a href="{{ url_for('list_employes', tri_par='date_embauche', ordre='asc' if tri_par == 'date_embauche' and ordre == 'desc' else 'desc') }}">
+                Date d'Embauche {% if tri_par == 'date_embauche' %}{{ '▲' if ordre == 'asc' else '▼' }}{% endif %}
+            </a>
+        </th>
+        {% if est_admin %}
+        <th class="action-column" style="text-align: center;">Action</th>
+        {% endif %}
+    </tr>
+</thead>
+    <tbody>
+        {% if employes %}
+            {% for emp in employes %}
+                <tr>
+                    <td><strong>{{ emp.matricule }}</strong></td>
+                    <td><span style="font-weight: 500; color: #2c3e50;">{{ emp.cin }}</span></td> <!-- 🔴 AJOUTÉ : Valeur du CIN -->
+                    <!-- 🔴 RECTIFICATION AFFICHAGE IDENTIFIANT -->
+<td>
+    {% if emp.user %}
+        <span style="color: #2c3e50; font-weight: 500;">@{{ emp.user.NomUtilisateur }}</span>
+    {% else %}
+        <span style="color: #95a5a6; font-style: italic;">Aucun</span>
+    {% endif %}
+</td>
+
+                    <td>{{ emp.prenom }} {{ emp.nom }}</td>
+                    <td>{{ emp.date_naissance.strftime('%d/%m/%Y') if emp.date_naissance else 'Non renseignée' }}</td>
+                    <td>{{ emp.lieu_naissance or 'Non spécifié' }}</td>
+                    <td>{{ emp.telephone or 'Non spécifié' }}</td>
+                    <td>{{ emp.adresse or 'Non spécifiée' }}</td>
+                    <td>{{ emp.date_embauche.strftime('%d/%m/%Y') if emp.date_embauche else 'Non renseignée' }}</td>
+                    
+                    <!-- Colonne Action -->
+                    {% if est_admin %}
+                        <td class="action-column" style="text-align: center;">
+                            <button type="button" 
+                                    class="btn-action-edit" 
+                                    data-id="{{ emp.id_employe }}"
+                                    data-cin="{{ emp.cin }}"
+                                    data-naissance="{{ emp.date_naissance.strftime('%Y-%m-%d') if emp.date_naissance }}"
+                                    data-lieu="{{ emp.lieu_naissance }}"
+                                    onclick="chargerDonneesEmploye(this.dataset.id)">
+                                Modifier
+                            </button>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <!-- 🔴 Ajustement du colspan à 10 pour correspondre exactement au nombre de colonnes -->
+                <td colspan="{% if est_admin %}10{% else %}9{% endif %}" style="text-align: center; color: #7f8c8d; padding: 30px;">
+                    Aucun enregistrement d'employé trouvé.
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+<!-- BLOC DE PAGINATION -->
+<div class="no-print" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; font-family: 'Segoe UI', sans-serif;">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('list_employes', page=pagination.prev_num) }}" style="padding: 8px 16px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">« Précédent</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: not-allowed;">« Précédent</span>
+    {% endif %}
+
+    <span style="font-size: 14px; color: #2c3e50; font-weight: 500;">
+        Page <strong>{{ pagination.page }}</strong> sur <strong>{{ pagination.pages }}</strong>
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('list_employes', page=pagination.next_num) }}" style="padding: 8px 16px; background-color: #2c3e50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">Suivant »</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: not-allowed;">Suivant »</span>
+    {% endif %}
+</div>
+</div>
+
+<script>
+// =======================================================================
+// ROUTINE DE MODIFICATION (Remontée fluide et remplissage automatique)
+// =======================================================================
+// =======================================================================
+// ROUTINE DE MODIFICATION (Remontée fluide et remplissage automatique)
+// =======================================================================
+function chargerDonneesEmploye(id) {
+    console.log("Chargement dynamique de la fiche employé ID :", id);
+    
+    // 1. Récupération des composants de l'interface
+    var formTitle = document.getElementById('form-title');
+    var submitBtn = document.getElementById('submitBtn');
+    var cancelBtn = document.getElementById('cancelBtn');
+    var formElement = document.getElementById('employeForm');
+    
+    // 2. Basculement visuel de l'en-tête du formulaire en mode édition
+    if (formTitle) formTitle.innerText = "📝 Modifier la fiche de l'employé #" + id;
+    if (submitBtn) {
+        submitBtn.innerText = "💾 Enregistrer les modifications";
+        submitBtn.style.backgroundColor = "#2980b9"; // Passe en bleu pour le mode édition
+    }
+    if (cancelBtn) cancelBtn.style.display = "block"; // Affiche le bouton Annuler
+    
+    // 3. Redirection de l'action du formulaire vers la route Python de modification
+    if (formElement) {
+        formElement.action = "/employes/modifier/" + id;
+    }
+    
+    // 4. Ciblage et extraction des valeurs textuelles de la ligne du tableau
+    var boutonClique = document.querySelector(`button[data-id="${id}"]`);
+    var ligneTableau = boutonClique.closest('tr');
+    
+    // ✨ CORRECTION STRICTE DES INDEX DE CELLULES
+    // CORRECTION DES INDEX SUITE À L'AJOUT DE LA COLONNE CIN
+var cinVal            = ligneTableau.cells[1].innerText.trim(); // Index 1 = CIN
+var identifiantCompte = ligneTableau.cells[2].innerText.replace("@", "").trim(); // Index 2
+var nomComplet        = ligneTableau.cells[3].innerText.trim(); // Index 3 = Nom Complet
+var date_naissance    = ligneTableau.cells[4].innerText.trim(); // Index 4 Date naissance
+var lieu_naissance    = ligneTableau.cells[5].innerText.trim(); // Index 5 = lieu naissance
+var telephone         = ligneTableau.cells[6].innerText.trim(); // Index 6 = Téléphone
+var adresse           = ligneTableau.cells[7].innerText.trim(); // Index 7 = Adresse
+var date_embauche     = ligneTableau.cells[8].innerText.trim(); // Index 8 =ambauche
+
+    
+    // Découpage automatique du Prénom et du Nom
+    var espaceIndex = nomComplet.indexOf(" ");
+    var prenomVal = espaceIndex !== -1 ? nomComplet.substring(0, espaceIndex) : nomComplet;
+    var nomVal = espaceIndex !== -1 ? nomComplet.substring(espaceIndex + 1) : "";
+    
+    // 5. Extraction des valeurs d'état civil stockées sur les attributs data- du bouton
+    var dateNaissanceVal = boutonClique.getAttribute('data-naissance');
+    var lieuNaissanceVal = boutonClique.getAttribute('data-lieu');
+    
+    // 6. Injection propre dans les champs du formulaire
+    if (document.getElementById('cin')) document.getElementById('cin').value = cinVal;
+    if (document.getElementById('prenom')) document.getElementById('prenom').value = prenomVal;
+    if (document.getElementById('nom')) document.getElementById('nom').value = nomVal;
+    
+    if (document.getElementById('telephone')) {
+        document.getElementById('telephone').value = (telephone === 'Non spécifié' || telephone === 'Non spécifiée') ? "" : telephone;
+    }
+    if (document.getElementById('adresse')) {
+        document.getElementById('adresse').value = (adresse === 'Non spécifié' || adresse === 'Non spécifiée') ? "" : adresse;
+    }
+    if (document.getElementById('date_naissance')) document.getElementById('date_naissance').value = dateNaissanceVal || "";
+    if (document.getElementById('lieu_naissance')) document.getElementById('lieu_naissance').value = lieuNaissanceVal || "";
+    
+    // 7. Gestion de la liste déroulante du Compte Utilisateur
+    var selectUser = document.getElementById('id_user');
+    if (selectUser) {
+        if (identifiantCompte === "Inconnu" || identifiantCompte === "" || identifiantCompte === "Aucun") {
+            selectUser.selectedIndex = 0; // Aucun compte lié
+        } else {
+            var optionExiste = false;
+            for (var i = 0; i < selectUser.options.length; i++) {
+                if (selectUser.options[i].text.split(' ')[0].replace("@", "") === identifiantCompte) {
+                    selectUser.selectedIndex = i;
+                    optionExiste = true;
+                    break;
+                }
+            }
+            // Option de secours si le compte est masqué
+            if (!optionExiste) {
+                var optionTemporaire = document.createElement("option");
+                optionTemporaire.value = ""; 
+                optionTemporaire.text = "@" + identifiantCompte + " (Compte actuel)";
+                optionTemporaire.selected = true;
+                optionTemporaire.disabled = true;
+                selectUser.add(optionTemporaire);
+            }
+        }
+    }
+    
+    // 8. Remontée fluide vers le formulaire
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =======================================================================
+// ROUTINE D'ANNULATION (Restauration complète du mode ajout initial)
+// =======================================================================
+function annulerModification() {
+    var formTitle = document.getElementById('form-title');
+    var submitBtn = document.getElementById('submitBtn');
+    var cancelBtn = document.getElementById('cancelBtn');
+    var formElement = document.getElementById('employeForm');
+    
+    if (formTitle) formTitle.innerText = "➕ Enregistrer un nouvel employé";
+    if (submitBtn) {
+        submitBtn.innerText = "Générer le Matricule & Créer la Fiche";
+        submitBtn.style.backgroundColor = "#27ae60"; // Repasse au vert d'origine
+    }
+    if (cancelBtn) cancelBtn.style.display = "none"; // Recache le bouton Annuler
+    
+    if (formElement) {
+        formElement.action = "/employes/ajouter"; // Réaligne sur la route d'ajout (Ajustez selon votre blueprint)
+        formElement.reset(); // Vide intégralement tous les champs
+    }
+}
+
+// =======================================================================
+// INITIALISATION ET MOTEUR DE RECHERCHE DYNAMIQUE
+// =======================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Système d'interface interactif RH PROMAS synchronisé à 10 colonnes.");
+    
+    var searchBar = document.getElementById('searchBar');
+    var btnSearch = document.getElementById('btnSearch');
+    
+    if (searchBar) {
+        searchBar.addEventListener('keyup', filtrerTableauEmployes);
+    }
+    if (btnSearch) {
+        btnSearch.addEventListener('click', filtrerTableauEmployes);
+    }
+    
+    function filtrerTableauEmployes() {
+    var filtre = searchBar.value.toLowerCase().trim();
+    var lignesTableau = document.querySelectorAll('table tbody tr');
+
+    lignesTableau.forEach(function(ligne) {
+        if (ligne.cells.length === 1) return; // Évite de masquer le message "Aucun enregistrement"
+        
+        // CORRECTION DES INDEX POUR LA RECHERCHE
+        var nomComplet = ligne.cells[3] ? ligne.cells[3].innerText.toLowerCase() : "";
+        var telephone  = ligne.cells[6] ? ligne.cells[6].innerText.toLowerCase() : "";
+
+        // Affichage ou masquage selon la correspondance
+        if (nomComplet.includes(filtre) || telephone.includes(filtre)) {
+            ligne.style.display = "";
+        } else {
+            ligne.style.display = "none";
+        }
+    });
+}
+
+});
+
+</script>
+</body>
+</html>

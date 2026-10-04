@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi de la Mortalité - Gestion Avicole</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+.container { max-width: 1100px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+.header-block { border-bottom: 2px solid #e74c3c; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+h2 { color: #1e2229; margin: 0; font-size: 22px; }
+.btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+.btn-back:hover { background-color: #6c7a7d; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.full-width { grid-column: span 2; }
+label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+.btn-submit { background-color: #e74c3c; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 2; transition: background 0.2s; }
+.btn-submit:hover { background-color: #c0392b; }
+.btn-edit-mode { background-color: #3498db !important; }
+.btn-edit-mode:hover { background-color: #2980b9 !important; }
+.btn-cancel { display: none; background-color: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; text-decoration: none; margin-top: -5px; margin-bottom: 15px; }
+.alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 14px; font-weight: bold; }
+.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* Styles du Tableau */
+table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; table-layout: fixed; }
+th, td { padding: 4px 8px !important; text-align: left; border-bottom: 1px solid #ddd; font-size: 13.5px; word-wrap: break-word; line-height: 1.2; }
+th { background-color: #1e2229; color: white; font-weight: bold; }
+tr:hover { background-color: #f1f4f6; }
+
+th:nth-child(1), td:nth-child(1) { width: 13%; } /* Date */
+th:nth-child(2), td:nth-child(2) { width: 12%; } /* Code Lot */
+th:nth-child(3), td:nth-child(3) { width: 15%; } /* Sujets Perdus */
+th:nth-child(4), td:nth-child(4) { width: 18%; } /* Taux Cumulé */
+th:nth-child(5), td:nth-child(5) { width: 16%; } /* Cause */
+th:nth-child(6), td:nth-child(6) { width: 14%; } /* Opérateur */
+th:nth-child(7), td:nth-child(7) { width: 12%; } /* Action */
+
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; display: inline-block; }
+.badge-danger { background-color: #e74c3c; }
+.badge-warning { background-color: #f39c12; }
+.badge-success { background-color: #2ecc71; }
+.btn-action-edit { background-color: #f39c12; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; display: inline-block; text-decoration: none; }
+.btn-action-edit:hover { background-color: #d35400; }
+
+ .pagination-block { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #ebebeb; 
+        }
+        .pagination-btn { 
+            background-color: white; 
+            color: #2c3e50; 
+            padding: 6px 12px; 
+            text-decoration: none; 
+            border: 1px solid #cfd9db; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .pagination-btn:hover:not(.disabled) { 
+            background-color: #f1f4f6; 
+        }
+        .pagination-btn.disabled { 
+            color: #bdc3c7; 
+            cursor: not-allowed; 
+            background-color: #f8f9fa; 
+            border-color: #ebebeb; 
+        }
+
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header-block">
+<h3 id="form-title">❌ Déclaration Quotidienne de Mortalité</h3>
+<a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert {{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Formulaire d'insertion et modification -->
+<form action="{{ url_for('ajouter_mortalite') }}" method="POST" id="mortaliteForm">
+<input type="hidden" id="id_mortalite_modif" name="id_mortalite_modif" value="">
+<div class="form-grid">
+<div class="form-group">
+<label for="id_lot">Sélectionner le Lot Avicole * :</label>
+<select id="id_lot" name="id_lot" onchange="ajusterLimitesDate()" required>
+<option value="" disabled selected>-- Choisir un lot actif --</option>
+{% for lot in lots %}
+<option value="{{ lot.id_lot }}" data-code="{{ lot.code_lot }}" data-datecreation="{{ lot.date_creation.strftime('%Y-%m-%d') if lot.date_creation else '' }}">{{ lot.code_lot }} ({{ lot.souche }})</option>
+{% endfor %}
+</select>
+<!-- Indicateur visuel textuel pour guider l'opérateur -->
+<small id="info_date_creation" style="display: none; margin-top: 5px; color: #2c3e50; font-weight: 600; font-style: italic;"></small>
+</div>
+
+<div class="form-group">
+<label for="date_mortalite">Date du constat * :</label>
+<input type="date" id="date_mortalite" name="date_mortalite" required>
+</div>
+
+<div class="form-group">
+<label for="nombre">Nombre de sujets morts * :</label>
+<input type="number" id="nombre" name="nombre" min="1" placeholder="Ex: 5" required>
+</div>
+
+<div class="form-group">
+<label for="cause">Cause suspectée / Symptômes :</label>
+<input type="text" id="cause" name="cause" placeholder="Ex: Chaleur, Stress, Coccidiose">
+</div>
+
+<button type="submit" id="submitBtn" class="btn-submit">❌ Enregistrer les Pertes</button>
+<button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">❌ Annuler la modification</button>
+</div>
+</form>
+
+<!-- Bloc de filtrage par Lot Avicole à l'écran -->
+<div style="background-color: #f8f9fa; border: 1px solid #e6e6e6; border-radius: 6px; padding: 12px; margin-top: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+<label for="select_lot" style="font-weight: bold; color: #2c3e50; font-size: 14px; margin: 0;">Filtrer la page par Lot Avicole :</label>
+<select id="id_lot" name="id_lot" onchange="ajusterLimitesDate()" required>
+    <option value="" disabled {% if not dernier_id_lot %}selected{% endif %}>-- Choisir un lot actif --</option>
+    {% for lot in lots %}
+    <option value="{{ lot.id_lot }}" 
+            data-code="{{ lot.code_lot }}" 
+            data-datecreation="{{ lot.date_creation.strftime('%Y-%m-%d') if lot.date_creation else '' }}"
+            {% if lot.id_lot == dernier_id_lot %}selected{% endif %}>
+        {{ lot.code_lot }} ({{ lot.souche }})
+    </option>
+    {% endfor %}
+</select>
+</div>
+
+<h3>❌ Registre Chronologique des Pertes & Taux de Mortalité</h3>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Code Lot</th>
+<th>Sujets Perdus</th>
+<th>Taux de Perte Cumulé</th>
+<th>Cause constatée</th>
+<th>Opérateur</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+{% if registres %}
+{% for r in registres %}
+<tr id="row-{{ r.id_mortalite }}">
+<td id="date-{{ r.id_mortalite }}" data-dateiso="{{ r.date_mortalite }}">{{ r.date_mortalite.strftime('%d/%m/%Y') }}</td>
+<td id="lot-{{ r.id_mortalite }}" data-idlot="{{ r.id_lot }}"><strong>{{ r.lot_avicole.code_lot }}</strong></td>
+<td id="nbr-{{ r.id_mortalite }}"><span style="color: #c0392b; font-weight: bold;">{{ r.nombre }} sujets</span></td>
+<td>
+{% if r.taux_cumule > 10.0 %}
+<span class="badge badge-danger">{{ "%.2f"|format(r.taux_cumule) }} % (Alerte)</span>
+{% elif r.taux_cumule > 5.0 %}
+<span class="badge badge-warning">{{ "%.2f"|format(r.taux_cumule) }} % (Seuil critique)</span>
+{% else %}
+<span class="badge badge-success">{{ "%.2f"|format(r.taux_cumule) }} % (Normal)</span>
+{% endif %}
+</td>
+<td id="cause-{{ r.id_mortalite }}">{{ r.cause or 'Non spécifiée' }}</td>
+<td>
+{% if est_admin or r.id_user == session['user_id'] %}
+<span style="color: #2c3e50; font-weight: bold; font-size: 13px;">@{{ r.operateur.NomUtilisateur if r.operateur else 'PROMAS' }}</span>
+{% else %}
+<span style="color: #7f8c8d; font-style: italic; font-size: 13px;">Masqué</span>
+{% endif %}
+</td>
+<td>
+<button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ r.id_mortalite }}')">✏ Modifier</button>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" style="text-align: center; color: #7f8c8d; padding: 20px; font-weight: bold;">Aucune mortalité enregistrée sur cette page.</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+
+<!-- BLOC DE PAGINATION DYNAMIQUE -->
+<div class="pagination-block print-hide">
+    <!-- Bouton Précédent -->
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('liste_mortalites', page=pagination.prev_num) }}" class="pagination-btn">« Précédent</a>
+    {% else %}
+        <span class="pagination-btn disabled">« Précédent</span>
+    {% endif %}
+
+    <!-- Informations d'état -->
+    <span class="pagination-info">
+        Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} enregistrement(s) au total)
+    </span>
+
+    <!-- Bouton Suivant -->
+    {% if pagination.has_next %}
+        <a href="{{ url_for('liste_mortalites', page=pagination.next_num) }}" class="pagination-btn">Suivant »</a>
+    {% else %}
+        <span class="pagination-btn disabled">Suivant »</span>
+    {% endif %}
+</div>
+
+</div>
+<script>
+// Événement déclenché dès que la structure de la page est prête
+window.addEventListener('DOMContentLoaded', (event) => {
+    genererListeLots();
+    initialiserContraintesDate();
+});
+
+// 1. Initialise la borne maximale à la date d'aujourd'hui
+function initialiserContraintesDate() {
+    const inputDate = document.getElementById('date_mortalite');
+    const aujourdhui = new Date().toISOString().split('T')[0];
+    
+    // Bloque le calendrier pour interdire le futur
+    inputDate.setAttribute('max', aujourdhui);
+}
+
+// 2. Ajuste la borne minimale (min) selon le lot sélectionné
+function ajusterLimitesDate() {
+    const selectLot = document.getElementById('id_lot');
+    const inputDate = document.getElementById('date_mortalite');
+    
+    // Récupération de l'option sélectionnée
+    const optionSelectionnee = selectLot.options[selectLot.selectedIndex];
+    const dateCreation = optionSelectionnee.getAttribute('data-datecreation');
+    
+    if (dateCreation && dateCreation !== "") {
+        // Applique la date minimale autorisée pour ce lot
+        inputDate.setAttribute('min', dateCreation);
+        
+        // Si la date déjà saisie est en conflit avec les nouvelles limites, on la vide
+        if (inputDate.value && inputDate.value < dateCreation) {
+            inputDate.value = "";
+            alert("⚠️ La date précédemment saisie était antérieure à la date de création de ce lot. Veuillez la corriger.");
+        }
+    } else {
+        inputDate.removeAttribute('min');
+    }
+}
+
+// 3. Mise à jour de la routine de modification pour charger correctement les contraintes
+function chargerDonnees(id) {
+    document.getElementById('form-title').innerText = "✏ Correction d'une Fiche Mortalité";
+    document.getElementById('submitBtn').innerText = "❌ Mettre à jour le Registre";
+    document.getElementById('submitBtn').classList.add('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "inline-block";
+    
+    var elementLot = document.getElementById('lot-' + id);
+    var elementDate = document.getElementById('date-' + id);
+    var elementNbr = document.getElementById('nbr-' + id);
+    var elementCause = document.getElementById('cause-' + id);
+    
+    if (elementLot && elementDate && elementNbr && elementCause) {
+        var lotId = elementLot.getAttribute('data-idlot');
+        var dateIso = elementDate.getAttribute('data-dateiso');
+        var nbrVal = elementNbr.innerText.replace(" sujets", "").trim();
+        var causeVal = elementCause.innerText.trim();
+        
+        document.getElementById('id_mortalite_modif').value = id;
+        document.getElementById('id_lot').value = lotId;
+        
+        // Déclencher manuellement le changement pour appliquer le 'min' du lot chargé
+        ajusterLimitesDate();
+        
+        document.getElementById('date_mortalite').value = dateIso;
+        document.getElementById('nombre').value = parseInt(nbrVal);
+        document.getElementById('cause').value = (causeVal === 'Non spécifiée') ? "" : causeVal;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// 4. Pensez à nettoyer les contraintes lors de l'annulation
+function annulerModification() {
+    document.getElementById('mortaliteForm').reset();
+    document.getElementById('id_mortalite_modif').value = "";
+    document.getElementById('form-title').innerText = "❌ Déclaration Quotidienne de Mortalité";
+    document.getElementById('submitBtn').innerText = "❌ Enregistrer les Pertes";
+    document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "none";
+    
+    // Réinitialise les attributs de date
+    document.getElementById('date_mortalite').removeAttribute('min');
+    initialiserContraintesDate();
+}
+
+// Écoute en temps réel les changements manuels saisis au clavier
+document.getElementById('date_mortalite').addEventListener('input', function() {
+    const inputDate = this;
+    const dateSaisie = inputDate.value;
+    const min = inputDate.getAttribute('min');
+    const max = inputDate.getAttribute('max');
+    
+    if (!dateSaisie) {
+        inputDate.style.border = "1px solid #ccc";
+        return;
+    }
+    
+    // Si la date enfreint les règles temporelles minimales ou maximales
+    if ((min && dateSaisie < min) || (max && dateSaisie > max)) {
+        inputDate.style.border = "2px solid #e74c3c"; // Bordure rouge d'avertissement
+        inputDate.style.backgroundColor = "#fce4d6";
+    } else {
+        inputDate.style.border = "2px solid #2ecc71"; // Bordure verte de validation
+        inputDate.style.backgroundColor = "#e8f8f5";
+    }
+});
+window.addEventListener('DOMContentLoaded', (event) => {
+    // Initialise la liste déroulante des filtres et pré-sélectionne le dernier lot
+    genererListeLots("{{ dernier_id_lot }}");
+    initialiserContraintesDate();
+    
+    // Déclenche l'affichage initial de l'indicateur visuel du formulaire
+    ajusterLimitesDate();
+    
+    const formulaire = document.getElementById('mortaliteForm');
+    if (formulaire) {
+        formulaire.addEventListener('submit', validerSoumissionGlobale);
+    }
+});
+
+// GÉNÉRATION DYNAMIQUE DU MENU DÉROULANT DES LOTS
+function genererListeLots(idLotParDefaut) {
+    var selectFiltre = document.getElementById("select_lot");
+    var table = document.querySelector("table tbody");
+    if (!table) return;
+    
+    var rows = table.getElementsByTagName("tr");
+    var lotsUniques = new Map(); // Permet d'associer l'ID du lot à son Code visuel
+    
+    // Extraction des lots présents dans le tableau de la page actuelle
+    for (var i = 0; i < rows.length; i++) {
+        var tdLot = rows[i].querySelector("td[id^='lot-']");
+        if (tdLot) {
+            var idLot = tdLot.getAttribute("data-idlot");
+            var codeLot = tdLot.innerText.trim();
+            if (idLot && codeLot !== "") {
+                lotsUniques.set(idLot, codeLot);
+            }
+        }
+    }
+    
+    // Remplissage du select de filtrage
+    lotsUniques.forEach(function(code, id) {
+        var el = document.createElement("option");
+        el.textContent = code;
+        el.value = id; // On filtre par ID numérique pour éviter les erreurs de casse
+        
+        // Si cet ID correspond au dernier lot saisi, on le marque comme sélectionné
+        if (id === idLotParDefaut) {
+            el.selected = true;
+        }
+        selectFiltre.appendChild(el);
+    });
+    
+    // Exécuter le filtrage immédiatement si un lot par défaut est sélectionné
+    if (idLotParDefaut !== "") {
+        filtrerParLot();
+    }
+}
+
+// FILTRAGE DES LIGNES DU TABLEAU
+function filtrerParLot() {
+    var select = document.getElementById("select_lot");
+    var filterValue = select.value; // Contient l'id_lot ou "tous"
+    var table = document.querySelector("table tbody");
+    if (!table) return;
+    
+    var rows = table.getElementsByTagName("tr");
+    var lignesVisibles = 0;
+    
+    for (var i = 0; i < rows.length; i++) {
+        var tdLot = rows[i].querySelector("td[id^='lot-']");
+        if (tdLot) {
+            var rowIdLot = tdLot.getAttribute("data-idlot");
+            
+            // Comparaison stricte entre la sélection et l'attribut de la ligne
+            if (filterValue === "tous" || rowIdLot === filterValue) {
+                rows[i].style.display = "";
+                lignesVisibles++;
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
+    
+    // Gestion visuelle si aucune ligne ne correspond sur la page courante
+    var tfootExistant = table.querySelector(".no-match-row");
+    if (tfootExistant) tfootExistant.remove();
+    
+    if (lignesVisibles === 0 && rows.length > 0) {
+        var emptyRow = document.createElement("tr");
+        emptyRow.className = "no-match-row";
+        emptyRow.innerHTML = `<td colspan="7" style="text-align: center; color: #7f8c8d; padding: 15px; font-weight: bold;">Aucun enregistrement pour ce lot sur cette page.</td>`;
+        table.appendChild(emptyRow);
+    }
+}
+
+</script>
+</body>
+</html>

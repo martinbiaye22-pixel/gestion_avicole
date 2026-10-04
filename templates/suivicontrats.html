@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des Contrats & Affectations - PROMAS</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        
+        .btn-back { background-color: #f1c40f; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-print { background-color: #1e2229; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-left: 10px; }
+
+        /* GRILLE FORMULAIRE COMPACTE */
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; width: 100%; }
+        
+        /* 🔴 COMPOSANTS ALIGNEMENT ET CONTENEUR UNIQUE DES BOUTONS DE SOUPOUDE */
+        .button-container { grid-column: span 4; display: flex; gap: 10px; width: 100%; margin-top: 5px; }
+        .btn-submit { flex: 1; background-color: #2c3e50; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #1a252f; }
+        .btn-cancel { background-color: #7f8c8d; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; text-transform: uppercase; display: none; transition: background 0.2s; }
+        .btn-cancel:hover { background-color: #6c7a7b; }
+
+        /* TABLEAUX */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; }
+        th, td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 13px; }
+        th { background-color: #34495e; color: white; font-weight: bold; }
+        tr:hover { background-color: #f1f4f6; }
+        .badge { display: inline-block; padding: 4px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; }
+        
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .print-header { display: none; margin-bottom: 25px; border-bottom: 3px double #333; padding-bottom: 15px; }
+
+        /* CONFIGURATION IMPRESSION PAYSAGE AUTOMATIQUE */
+        @media print {
+            @page { size: landscape; margin: 1cm; }
+            body { background-color: white; padding: 0; margin: 0; color: #000 !important; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
+            .header-block, form, h2:nth-of-type(1), .no-print, .action-column { display: none !important; } 
+            .print-header { display: flex !important; justify-content: space-between !important; align-items: center !important; }
+            table { display: table !important; width: 100% !important; border: 1px solid #333 !important; }
+            th { background-color: #eaecee !important; color: black !important; border-bottom: 2px solid #000 !important; }
+            th, td { padding: 10px !important; border: 1px solid #333 !important; font-size: 11px !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- EN-TÊTE D'IMPRESSION COMPTABILITÉ -->
+    <div class="print-header">
+        <div>
+            <h1 style="margin: 0; font-size: 22px; font-weight: bold;">{{ entreprise.raison_sociale if entreprise and entreprise.raison_sociale else 'PROMAS Aviculture' }}</h1>
+            <p style="margin: 4px 0; font-size: 12px;">{{ entreprise.adresse if entreprise and entreprise.adresse else 'Dakar, Sénégal' }}</p>
+        </div>
+        <div style="text-align: right;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: bold;">Registre Évolutif des Postes & Forfaits Rémunérés</h2>
+            <p style="margin: 5px 0 0 0; font-size: 11px; background: #eee; padding: 4px 8px; border-radius: 4px; display: inline-block;">
+                Extrait édité le : {{ datetime_actuelle.strftime('%d/%m/%Y à %H:%M') }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Notifications Alertes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="header-block">
+    <div>
+        <h2 id="form-title">❌ Signer un nouveau contrat (Affectation & Forfait)</h2>
+        <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 13px;">Saisie unique d'évolution de poste ou ajustement de salaire (Historique préservé)</p>
+    </div>
+    <div style="display: inline-flex; align-items: center; gap: 10px;">
+        
+        <!-- 📊 BOUTON D'EXPORTATION EXCEL ADJACENT -->
+        <a href="{{ url_for('exporter_contrats_excel') }}" class="no-print" style="background-color: #27ae60; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; height: 35px; box-sizing: border-box; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#219653'" onmouseout="this.style.backgroundColor='#27ae60'">
+            📊 Exporter Excel
+        </a>
+          <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimer l'Historique</button>
+        <a href="{{ url_for('list_employes') }}" class="btn-back">← Registre Personnel</a>   
+    </div>
+</div>
+
+    <!-- 🔴 NETTOYAGE TERMINÉ : UN FORMULAIRE UNIQUE CORRECTEMENT IDENTIFIÉ -->
+    <form action="/contrats/ajouter" method="POST" id="contratForm" class="no-print">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_employe">Sélectionner l'Employé * :</label>
+                <select id="id_employe" name="id_employe" required>
+                    <option value="" disabled selected>-- Choisir un membre du personnel --</option>
+                    {% for emp in employes %}
+                        <option value="{{ emp.id_employe }}">{{ emp.prenom }} {{ emp.nom }} ({{ emp.matricule }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="type_contrat">Type de Contrat * :</label>
+                <select id="type_contrat" name="type_contrat" onchange="basculerChampDuree()" required>
+                    <option value="CDI" selected>CDI (Durée Indéterminée)</option>
+                    <option value="CDD">CDD (Durée Déterminée)</option>
+                    <option value="Stage">Stage</option>
+                    <option value="Journalier">Journalier / Prestataire</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="bloc_duree" style="display: none;">
+                <label for="duree_contrat">Durée du Contrat (en mois) * :</label>
+                <input type="number" id="duree_contrat" name="duree_contrat" min="1" placeholder="Ex: 6">
+            </div>
+
+            <div class="form-group">
+                <label for="fonction_interne">Poste / Affectation à attribuer * :</label>
+                <input type="text" id="fonction_interne" name="fonction_interne" placeholder="Ex: Chef de bâtiment, Vigile, Secrétaire" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mode_renumeration">Mode de Rémunération * :</label>
+                <select id="mode_renumeration" name="mode_renumeration" required>
+                    <option value="Mensuel" selected>Forfait Mensuel Fixe</option>
+                    <option value="Par lot">Rémunération par Lot Avicole</option>
+                    <option value="Journalier">Rémunération Journalière</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="salaire_base">Montant du Forfait Brut (FCFA) * :</label>
+                <input type="number" id="salaire_base" name="salaire_forfaitaire" min="0" placeholder="Ex: 180000" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="date_debut">Date de Prise d'Effet / Affectation * :</label>
+                <input type="date" id="date_debut" name="date_debut" required>
+            </div>
+
+            <!-- Conteneur unifié et alignement géométrique horizontal des boutons -->
+            <div class="button-container">
+                <button type="submit" id="submitBtn" class="btn-submit">📝 Valider la Situation Administrative (Mutation / Forfait)</button>
+                <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModificationContrat()">Annuler</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- FILTRES INTERACTIFS DYNAMIQUES ET COMPTEUR COMPTABLE -->
+    <div class="no-print" style="background: #ffffff; border: 1px solid #e6e6e6; padding: 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin: 25px 0 15px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
+            <div style="display: flex; flex-direction: column; width: 180px;">
+                <label for="filterMois" style="font-weight: bold; color: #2c3e50; font-size: 13px; margin-bottom: 5px;">Mois d'effet :</label>
+                <select id="filterMois" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                    <option value="">Tous les mois</option>
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column; width: 150px;">
+                <label for="filterAnnee" style="font-weight: bold; color: #2c3e50; font-size: 13px; margin-bottom: 5px;">Année d'effet :</label>
+                <select id="filterAnnee" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                    <option value="">Toutes les années</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 💰 ENCADRÉ DÉCAISSEMENT TOTAL DYNAMIQUE -->
+        <div style="background-color: #2c3e50; color: white; padding: 15px 25px; border-radius: 6px; text-align: right; min-width: 250px;">
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: block; opacity: 0.8; margin-bottom: 2px;">Décaissement Total Salaires</span>
+            <strong id="decaissementTotal" style="font-size: 24px; font-family: monospace;">0 FCFA</strong>
+        </div>
+    </div>
+    <!-- 📜 TABLEAU CHRONOLOGIQUE FLUIDE DES CONTRATS -->
+    <h2>📜 Historique Chronologique de Carrière & Évolution des Salaires</h2>
+    <table>
+    <thead>
+        <tr>
+            <th>Employé</th>
+            <th>Type Contrat</th>
+            <th>Durée (Mois)</th>
+            <th>Poste Occupé</th>
+            <th>Type Rémunération</th>
+            <th>Forfait Salarial</th>
+            <th>Date Prise d'Effet</th>
+            <th style="text-align: center;" class="action-column">Statut</th>
+            <th style="text-align: center;" class="action-column">Action</th> <!-- 🔴 AJOUTÉ -->
+        </tr>
+    </thead>
+    <tbody>
+        {% if contrats_affiches %}
+            {% for item in contrats_affiches %}
+                <tr data-mois="{{ item.date_debut.strftime('%m') }}" data-annee="{{ item.date_debut.strftime('%Y') }}">
+                    <td><strong>{{ item.nom_complet }}</strong> <small style="color: #7f8c8d;">({{ item.matricule }})</small></td>
+                    <td><strong>{{ item.type_contrat }}</strong></td>
+                    <td>{{ 'Indéterminée' if item.type_contrat == 'CDI' else item.duree_contrat ~ ' mois' }}</td>
+                    <td><span style="color: #2c3e50; font-weight: 500;">{{ item.poste_occupe }}</span></td>
+                    <td>{{ item.mode_renumeration }}</td>
+                    <td class="salaire-cell" data-montant="{{ item.salaire_forfaitaire }}">
+                        <strong>{{ "{:,.0f}".format(item.salaire_forfaitaire).replace(",", " ") }} FCFA</strong>
+                    </td>
+                    <td>{{ item.date_debut.strftime('%d/%m/%Y') }}</td>
+                    <td style="text-align: center;" class="action-column">
+                        <span class="badge" style="background-color: #2ecc71; color: white;">Actif</span>
+                    </td>
+                    
+                    <!-- 🔴 CELLULE D'ACTION MODIFIER -->
+                    <td style="text-align: center;" class="action-column">
+                        <button type="button" style="background-color: #e67e22; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;"
+                                data-idcontrat="{{ item.id_contrat }}"
+                                data-idemploye="{{ item.id_employe }}"
+                                data-type="{{ item.type_contrat }}"
+                                data-duree="{{ item.duree_contrat }}"
+                                data-poste="{{ item.poste_occupe }}"
+                                data-mode="{{ item.mode_renumeration }}"
+                                data-montant="{{ item.salaire_forfaitaire }}"
+                                data-debut="{{ item.date_debut.strftime('%Y-%m-%d') }}"
+                                onclick="chargerDonneesContrat(this)">
+                            Modifier
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
+<!-- BLOC DE PAGINATION NATIVE DU JOURNAL DES CONTRATS -->
+<div class="no-print" style="margin-top: 20px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; font-family: 'Segoe UI', sans-serif;">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('suivi_contrats', page=pagination.prev_num) }}" style="padding: 8px 16px; background-color: #34495e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; transition: background 0.2s;">« Précédent</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: not-allowed;">« Précédent</span>
+    {% endif %}
+
+    <span style="font-size: 13px; color: #2c3e50; font-weight: 500;">
+        Page <strong>{{ pagination.page }}</strong> sur <strong>{{ pagination.pages }}</strong>
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('suivi_contrats', page=pagination.next_num) }}" style="padding: 8px 16px; background-color: #34495e; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; transition: background 0.2s;">Suivant »</a>
+    {% else %}
+        <span style="padding: 8px 16px; background-color: #bdc3c7; color: white; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: not-allowed;">Suivant »</span>
+    {% endif %}
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var filterMois = document.getElementById('filterMois');
+    var filterAnnee = document.getElementById('filterAnnee');
+    var lignesTableau = document.querySelectorAll('table tbody tr');
+
+    var nomsMois = {
+        "01": "Janvier", "02": "Février", "03": "Mars", "04": "Avril", 
+        "05": "Mai", "06": "Juin", "07": "Juillet", "08": "Août", 
+        "09": "Septembre", "10": "Octobre", "11": "Novembre", "12": "Décembre"
+    };
+
+    // Extraction automatique des options de filtres sans doublons
+    var anneesPresentes = new Set();
+    var moisPresents = new Set();
+
+    lignesTableau.forEach(function(ligne) {
+        if (ligne.id === 'noResultsRow') return;
+        var m = Finder_M = ligne.getAttribute('data-mois');
+        var a = Finder_A = ligne.getAttribute('data-annee');
+        if (m) moisPresents.add(m);
+        if (a) anneesPresentes.add(a);
+    });
+
+    // Remplissage dynamique du select Année (tri décroissant)
+    Array.from(anneesPresentes).sort().reverse().forEach(function(annee) {
+        var opt = document.createElement('option');
+        opt.value = annee; opt.innerText = annee;
+        filterAnnee.appendChild(opt);
+    });
+
+    // Remplissage dynamique du select Mois (tri chronologique)
+    Array.from(moisPresents).sort().forEach(function(mois) {
+        var opt = document.createElement('option');
+        opt.value = mois; opt.innerText = nomsMois[mois] || ("Mois " + mois);
+        filterMois.appendChild(opt);
+    });
+
+    if (filterMois && filterAnnee) {
+        filterMois.addEventListener('change', executerFiltrageEtDecaissement);
+        filterAnnee.addEventListener('change', executerFiltrageEtDecaissement);
+    }
+    
+    // Premier calcul global au chargement de l'interface
+    executerFiltrageEtDecaissement();
+
+    function executerFiltrageEtDecaissement() {
+        var moisCible = filterMois.value;
+        var anneeCible = filterAnnee.value;
+        var cumulSomme = 0;
+        var lignesVisibles = 0;
+        var noResultsRow = document.getElementById('noResultsRow');
+
+        lignesTableau.forEach(function(ligne) {
+            if (ligne.id === 'noResultsRow') return;
+            var ligneMois = ligne.getAttribute('data-mois');
+            var ligneAnnee = ligne.getAttribute('data-annee');
+            
+            var matchMois = (moisCible === "" || ligneMois === moisCible);
+            var matchAnnee = (anneeCible === "" || ligneAnnee === anneeCible);
+
+            if (matchMois && matchAnnee) {
+                ligne.style.display = ""; lignesVisibles++;
+                var celluleSalaire = ligne.querySelector('.salaire-cell');
+                if (celluleSalaire) {
+                    cumulSomme += parseFloat(celluleSalaire.getAttribute('data-montant')) || 0;
+                }
+            } else {
+                ligne.style.display = "none"; 
+            }
+        });
+
+        if (noResultsRow) {
+            noResultsRow.style.display = (lignesVisibles === 0) ? "" : "none";
+        }
+        document.getElementById('decaissementTotal').innerText = new Intl.NumberFormat('fr-FR').format(cumulSomme) + " FCFA";
+    }
+});
+
+function basculerChampDuree() {
+    var typeContrat = document.getElementById('type_contrat').value;
+    var blocDuree = document.getElementById('bloc_duree');
+    var inputDuree = document.getElementById('duree_contrat');
+    
+    if (typeContrat === 'CDI') {
+        blocDuree.style.display = 'none';
+        inputDuree.removeAttribute('required');
+        inputDuree.value = '';
+    } else {
+        blocDuree.style.display = 'flex';
+        blocDuree.style.flexDirection = 'column';
+        inputDuree.setAttribute('required', 'required');
+    }
+}
+// 🔴 INTERFACE DYNAMIQUE DE MODIFICATION DES CONTRATS
+// 🔴 ENGINE : GESTION DYNAMIQUE DU BOUTON UNIQUE (AJOUT / MODIFICATION)
+function chargerDonneesContrat(bouton) {
+    var idContrat = bouton.getAttribute('data-idcontrat');
+    console.log("Passage en mode modification pour le contrat ID :", idContrat);
+    
+    // 1. Métamorphose du bouton unique pour la modification
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.innerText = "💾 Enregistrer les rectifications du contrat #" + idContrat;
+        submitBtn.style.backgroundColor = "#e67e22"; // Passe au orange pour signaler la modification
+    }
+    
+    // 2. Affichage du bouton d'annulation de secours
+    var cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) cancelBtn.style.display = "block";
+    
+    // 3. Redirection dynamique de la cible vers la route Python de modification
+    var formElement = document.getElementById('contratForm') || bouton.closest('form');
+    if (formElement) {
+        formElement.action = "/contrats/modifier/" + idContrat;
+    }
+    
+    // 4. Remplissage automatique des champs de saisie du formulaire
+    document.getElementById('id_employe').value = bouton.getAttribute('data-idemploye');
+    document.getElementById('type_contrat').value = bouton.getAttribute('data-type');
+    
+    // Ajustement structurel de la durée
+    basculerChampDuree();
+    if (bouton.getAttribute('data-type') !== 'CDI') {
+        document.getElementById('duree_contrat').value = bouton.getAttribute('data-duree');
+    }
+    
+    document.getElementById('fonction_interne').value = bouton.getAttribute('data-poste');
+    document.getElementById('mode_renumeration').value = bouton.getAttribute('data-mode');
+    document.getElementById('salaire_base').value = bouton.getAttribute('data-montant');
+    document.getElementById('date_debut').value = bouton.getAttribute('data-debut');
+    
+    // Remontée fluide vers le haut de l'écran pour éditer
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 🔴 RESET : Restauration complète du mode ajout initial (Bouton bleu)
+function annulerModificationContrat() {
+    console.log("Restauration du mode d'ajout initial.");
+    
+    // 1. Repasse le bouton en mode Ajout d'origine
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.innerText = "📝 Valider la Situation Administrative (Mutation / Forfait)";
+        submitBtn.style.backgroundColor = "#2c3e50"; // Repasse au bleu d'origine
+    }
+    
+    // 2. Recache le bouton Annuler
+    var cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) cancelBtn.style.display = "none";
+    
+    // 3. Réaligne la cible du formulaire sur la route d'ajout initiale
+    var formElement = document.getElementById('contratForm');
+    if (formElement) {
+        formElement.action = "/contrats/ajouter";
+        formElement.reset(); // Vide intégralement tous les champs
+    }
+    
+    // Recale l'affichage de la durée
+    basculerChampDuree();
+}
+
+</script>
+</body>
+</html>

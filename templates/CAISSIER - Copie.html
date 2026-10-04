@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Personnel - Gestion Scolaire</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* MENU LATÉRAL ALIGNÉ À GAUCHE (RESTREINT) */
+        .sidebar {
+            width: 260px;
+            background-color: #2b303c;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #1e222b;
+            border-bottom: 1px solid #3d4454;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-category {
+            padding: 12px 20px 5px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #627293;
+            font-weight: bold;
+            background-color: #242933;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            display: block;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background-color: #3d4454;
+            color: #fff;
+            border-left-color: #28a745;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            background-color: #1e222b;
+            border-top: 1px solid #3d4454;
+        }
+
+        .btn-logout {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .btn-logout:hover { background-color: #c82333; }
+
+        /* ZONE DE TRAVAIL DROITE */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        .top-bar {
+            background-color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .top-bar h2 { margin: 0; color: #333; font-size: 18px; }
+
+        .dashboard-body { padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 600px; }
+        .card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #f4f4f9; padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. MENU COMPTE UTILISATEUR SECONDAIRE -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            Portail Utilisateur
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li><a href="/" class="menu-item">📋 Mes tâches</a></li>
+            
+            <li class="menu-category">Consultation</li>
+            <li><a href="#" class="menu-item">🔍 Rechercher un élève</a></li>
+            <li><a href="#" class="menu-item">📅 Emploi du temps</a></li>
+            
+            <li class="menu-category">Assistance</li>
+            <li><a href="#" class="menu-item">💬 Contacter l'administration</a></li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <a href="/deconnexion" class="btn-logout">Se déconnecter</a>
+        </div>
+    </div>
+
+    <!-- 2. CONTENU DE DROITE -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h2>🏫 {{ session['nom_ecole'] }}</h2>
+            <p>Session : <strong>{{ session['username'] }}</strong> (Utilisateur)</p>
+        </div>
+
+        <div class="dashboard-body">
+            <div class="card">
+                <h3>Espace de Consultation Restreint</h3>
+                <p>Bienvenue sur votre portail utilisateur.</p>
+                <p>Votre profil ne possède pas les privilèges d'Administrateur Principal. Vous pouvez uniquement naviguer dans les menus de consultation mis à votre disposition à gauche.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

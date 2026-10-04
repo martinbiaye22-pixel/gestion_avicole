@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Fournisseurs - Exploitation Avicole</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f6f9; 
+            color: #333; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 20px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+        }
+        .header-block { 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 12px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        h2 { 
+            color: #1e2229; 
+            margin: 0; 
+            font-size: 22px; 
+        }
+        .btn-back { 
+            background-color: #7f8c8d; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        .btn-back:hover { 
+            background-color: #6c7a7d; 
+        }
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 6px; 
+            border: 1px solid #e6e6e6; 
+            margin-bottom: 30px; 
+        }
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .form-group.full-width { 
+            grid-column: span 2; 
+        }
+        label { 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+            color: #2c3e50; 
+            font-size: 13px; 
+        }
+        input[type="text"] { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            box-sizing: border-box; 
+        }
+        .btn-submit { 
+    background-color: #34db7a; /* Couleur bleu ciel de base */
+    color: white; 
+    padding: 12px; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 15px; 
+    font-weight: bold; 
+    grid-column: span 2; 
+    transition: background 0.2s; 
+}
+.btn-submit:hover { 
+    background-color: #29a8b9; /* Bleu ciel légèrement plus foncé au survol de la souris */
+}
+ 
+        .btn-edit-mode { 
+            background-color: #3498db; 
+        }
+        .btn-edit-mode:hover { 
+            background-color: #2980b9; 
+        }
+        .btn-cancel { 
+            display: none; 
+            background-color: #e74c3c; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 14px; 
+            text-decoration: none; 
+            margin-top: -5px; 
+            margin-bottom: 15px; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        .alert { 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            table-layout: fixed; 
+        }
+        th, td { 
+            padding: 5px 8px !important; 
+            height: 26px !important; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+            vertical-align: middle; 
+            font-size: 13px; 
+            word-wrap: break-word; 
+        }
+        th { 
+            background-color: #1e2229; 
+            color: white; 
+            font-weight: bold; 
+        }
+        .btn-action-edit { 
+            background-color: #f39c12; 
+            color: white; 
+            border: none; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 12px; 
+            transition: background 0.2s; 
+        }
+        .btn-action-edit:hover { 
+            background-color: #d35400; 
+        }
+        .pagination-block { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 8px; 
+            margin-top: 25px; 
+            padding-top: 15px; 
+            border-top: 1px solid #ebebeb; 
+        }
+        .pagination-btn { 
+            background-color: white; 
+            color: #2c3e50; 
+            padding: 6px 12px; 
+            text-decoration: none; 
+            border: 1px solid #cfd9db; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        .pagination-btn:hover:not(.disabled) { 
+            background-color: #f1f4f6; 
+        }
+        .pagination-btn.disabled { 
+            color: #bdc3c7; 
+            cursor: not-allowed; 
+            background-color: #f8f9fa; 
+            border-color: #ebebeb; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header-block">
+            <h2 id="form-title">🗂 Fiche d'Enregistrement Fournisseur</h2>
+            <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('ajouter_fournisseur') }}" method="POST" id="fournisseurForm">
+            <input type="hidden" id="id_fournisseur_modif" name="id_fournisseur_modif" value="">
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="nom">Nom Complet / Raison Sociale du Fournisseur * :</label>
+                    <input type="text" id="nom" name="nom" placeholder="Ex: GIE Aviculture du Centre, Société Aliments Elevage" required>
+                </div>
+                <div class="form-group">
+                    <label for="telephone">Numéro de Téléphone * :</label>
+                    <input type="text" id="telephone" name="telephone" placeholder="Ex: +221 77 000 00 00" required>
+                </div>
+                <div class="form-group">
+                    <label for="adresse">Adresse Civile / Géographique :</label>
+                    <input type="text" id="adresse" name="adresse" placeholder="Ex: Zone Industrielle, Dakar">
+                </div>
+                <button type="submit" id="submitBtn" class="btn-submit">💾 Enregistrer le Fournisseur</button>
+                <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">❌ Annuler la modification</button>
+            </div>
+        </form>
+
+        <!-- BARRE DE RECHERCHE SERVEUR -->
+        <div style="background-color: #f8f9fa; border: 1px solid #e6e6e6; border-radius: 6px; padding: 15px; margin-top: 15px; margin-bottom: 20px;">
+            <form method="GET" action="{{ url_for('liste_fournisseurs') }}" style="display: flex; align-items: center; gap: 15px; margin: 0; width: 100%;">
+                <label for="search_nom" style="font-weight: bold; color: #2c3e50; font-size: 14px; margin: 0;">Rechercher :</label>
+                <input type="text" id="search_nom" name="search_nom" value="{{ search_val }}" placeholder="Tapez un nom ou un numéro de téléphone..." style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; flex: 1; box-sizing: border-box;">
+                <button type="submit" style="background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px;">🔍 Rechercher</button>
+                {% if search_val %}
+                    <a href="{{ url_for('liste_fournisseurs') }}" style="background-color: #7f8c8d; color: white; padding: 10px 15px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 14px;">🔄 Réinitialiser</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <h2>📋 Répertoire Fournisseurs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">ID</th>
+                    <th style="width: 35%;">Nom de l'Établissement / Fournisseur</th>
+                    <th style="width: 18%;">Téléphone</th>
+                    <th style="width: 17%;">Adresse / Ville</th>
+                    <th style="width: 10%;">Opérateur</th>
+                    <th style="width: 10%; text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if fournisseurs %}
+                    {% for f in fournisseurs %}
+                        <tr id="row-{{ f.id_fournisseur }}">
+                            <td>#<strong>{{ f.id_fournisseur }}</strong></td>
+                            <td id="nom-{{ f.id_fournisseur }}">{{ f.nom }}</td>
+                            <td id="tel-{{ f.id_fournisseur }}">{{ f.telephone }}</td>
+                            <td id="adr-{{ f.id_fournisseur }}">{{ f.adresse or 'Non renseignée' }}</td>
+                    <td><span style="font-size: 11px; font-weight: bold; color: #2980b9;">@{{ f.user.NomUtilisateur if f.user else 'Système' }}</span></td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ f.id_fournisseur }}')">✏ Modifier</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #7f8c8d; padding: 20px; font-weight: bold;">ℹ Aucun fournisseur trouvé.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- BLOC DE NAVIGATION DE LA PAGINATION FILTRÉE -->
+<div class="pagination-block">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('liste_fournisseurs', page=pagination.prev_num, search_nom=search_val) }}" class="pagination-btn">« Précédent</a>
+    {% else %}
+        <span class="pagination-btn disabled">« Précédent</span>
+    {% endif %}
+
+    <span style="font-size: 13px; color: #7f8c8d; margin: 0 10px;">Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} tiers)</span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('liste_fournisseurs', page=pagination.next_num, search_nom=search_val) }}" class="pagination-btn">Suivant »</a>
+    {% else %}
+        <span class="pagination-btn disabled">Suivant »</span>
+    {% endif %}
+</div>
+
+</div> <!-- Fin du container global -->
+
+<!-- CODE JAVASCRIPT DE MODIFICATION ÉPURÉ -->
+<script>
+function chargerDonnees(id) {
+    document.getElementById('form-title').innerText = "✏ Modification de la Fiche Fournisseur";
+    document.getElementById('submitBtn').innerText = "👍 Confirmer et Appliquer les Modifications";
+    document.getElementById('submitBtn').classList.add('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "inline-block";
+    
+    var nomVal = document.getElementById('nom-' + id).innerText;
+    var telVal = document.getElementById('tel-' + id).innerText;
+    var adrVal = document.getElementById('adr-' + id).innerText;
+    
+    document.getElementById('id_fournisseur_modif').value = id;
+    document.getElementById('nom').value = nomVal;
+    document.getElementById('telephone').value = telVal;
+    document.getElementById('adresse').value = (adrVal === 'Non renseignée') ? "" : adrVal;
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function annulerModification() {
+    document.getElementById('fournisseurForm').reset();
+    document.getElementById('id_fournisseur_modif').value = "";
+    document.getElementById('form-title').innerText = "🗂 Fiche d'Enregistrement Fournisseur";
+    document.getElementById('submitBtn').innerText = "💾 Enregistrer le Fournisseur";
+    document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "none";
+}
+</script>

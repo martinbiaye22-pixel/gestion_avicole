@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Décaissements & Règlements Fournisseurs</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #e74c3c; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-back:hover { background-color: #6c7a7d; }
+        
+        /* Grille Formulaire */
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background: #fafbfc; padding: 20px; border-radius: 6px; border: 1px solid #e6ebeb; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; background: white; }
+        .btn-submit { background-color: #e74c3c; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 3; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #c0392b; }
+        
+        /* Bannière KPI */
+        .kpi-banner { background-color: #fdf2e9; border: 1px solid #fadbd8; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Tableaux */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; font-size: 13px; table-layout: fixed; }
+        th, td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; word-wrap: break-word; }
+        th { background-color: #1e2229; color: white; font-weight: bold; }
+        tr:hover { background-color: #f1f4f6; }
+        
+        /* Colonnes Proportions */
+       th:nth-child(1), td:nth-child(1) { width: 11%; } /* Date */
+       th:nth-child(2), td:nth-child(2) { width: 10%; } /* Achat N° */
+       th:nth-child(3), td:nth-child(3) { width: 18%; } /* Fournisseur */
+       th:nth-child(4), td:nth-child(4) { width: 14%; } /* Montant Payé */
+       th:nth-child(5), td:nth-child(5) { width: 11%; } /* Mode */
+       th:nth-child(6), td:nth-child(6) { width: 10%; } /* Pièce / Réf */
+       th:nth-child(7), td:nth-child(7) { width: 11%; } /* Opérateur */
+       th:nth-child(8), td:nth-child(8) { width: 15%; } /* Actions (Bouton Modifier) */
+       /* Sécurité anti-débordement pour les boutons d'action */
+    td:last-child {
+    text-align: center;
+    white-space: nowrap;
+}
+        
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* Pagination style */
+        .pagination-block { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e6ebeb; }
+        .pagination-btn { background-color: white; color: #2c3e50; padding: 7px 14px; text-decoration: none; border: 1px solid #cfd9db; border-radius: 4px; font-size: 13px; font-weight: bold; }
+        .pagination-btn:hover:not(.disabled) { background-color: #f1f4f6; }
+        .pagination-btn.disabled { color: #bdc3c7; cursor: not-allowed; background-color: #f8f9fa; border-color: #ebebeb; }
+        .print-only { display: none; }
+
+       /* =======================================================================
+   RÈGLES ET MÉDIAS QUERIES D'IMPRESSION (MODE PAYSAGE FORCÉ)
+   ======================================================================= */
+@media print {
+    /* 1. Force le format de page en A4 Paysage */
+    @page {
+        size: A4 landscape;
+        margin: 10mm 15px 10mm 15px;
+    }
+
+    body {
+        background-color: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        color: #000 !important;
+    }
+
+    .container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* Masquage des éléments inutiles sur le papier */
+    .header-block, form, .filter-print-zone, .print-hide, .pagination-block {
+        display: none !important;
+    }
+
+    /* 2. Révélation de l'en-tête d'impression et de la bannière KPI */
+    div.print-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        width: 100% !important;
+        margin-bottom: 25px !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 15px !important;
+    }
+
+    .kpi-banner {
+        display: flex !important;
+        background-color: #fcf2e9 !important;
+        border: 1px solid #ccc !important;
+        padding: 12px 15px !important;
+        margin-bottom: 20px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* 3. Stabilisation du tableau en mode Paysage sur toute la largeur */
+    table {
+        display: table !important;
+        width: 100% !important;
+        border: 1px solid #000 !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+    }
+
+    th {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-weight: bold !important;
+    }
+
+    th, td {
+        display: table-cell !important;
+        padding: 8px 10px !important;
+        border: 1px solid #000 !important;
+        font-size: 12px !important;
+        word-wrap: break-word !important;
+    }
+
+    td {
+        color: #000000 !important;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête Écran -->
+        <!-- En-tête d'impression (Masqué à l'écran, visible uniquement sur le PDF/Papier) -->
+<div class="print-header" style="display: none;">
+    <div class="print-header-left">
+        <!-- Extraction des variables depuis la table Configuration -->
+        <h1 style="margin: 0; font-size: 22px; font-weight: bold; color: #000; letter-spacing: 0.5px;">
+            {{ entreprise.raison_sociale or "Exploitation Avicole" }}
+        </h1>
+        <p style="margin: 4px 0; font-size: 13px; color: #333;">
+            {{ entreprise.adresse or "Ferme d'Élevage" }}
+        </p>
+        <p style="margin: 2px 0; font-size: 13px; color: #333;">
+            Tél: {{ entreprise.telephone or "Contact Non Spécifié" }}
+        </p>
+        {% if entreprise.email %}
+            <p style="margin: 2px 0; font-size: 13px; color: #333;">
+                Email: {{ entreprise.email }}
+            </p>
+        {% endif %}
+    </div>
+    
+    <div class="print-header-right" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+        <!-- Si un logo existe dans la configuration, on l'affiche à droite de l'en-tête -->
+        {% if entreprise.logo %}
+            <img src="{{ url_for('static', filename=entreprise.logo) }}" alt="Logo" style="max-height: 65px; max-width: 140px; object-fit: contain; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+        {% else %}
+            <div style="border: 1px solid black; padding: 6px 12px; font-weight: bold; font-size: 11px; text-align: center; line-height: 14px; background-color: #f8f9fa;">LOGO</div>
+        {% endif %}
+        
+        <h2 style="margin: 6px 0 0 0; color: #1e2229; font-size: 16px; font-weight: bold;">
+            Registre Central des Flux Sortants
+        </h2>
+        <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px; display: inline-block; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+            Période : <span id="print_mois">--</span> / <span id="print_annee">----</span>
+        </p>
+    </div>
+</div>
+ 
+        <div class="header-block print-hide">
+            <h2>Guichet de Caisse : Décaissements & Règlements</h2>
+            <a href="/" class="btn-back">← Tableau de Bord</a>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- FORMULAIRE DE RÈGLEMENT -->
+        <form method="POST" action="{{ url_for('gestion_paiements_achats') }}" class="form-grid print-hide">
+            <div class="form-group">
+                <label for="id_achat">Bon d'Achat Référence * :</label>
+                <!-- Dans la balise <select> du formulaire principale -->
+                <select name="id_achat" id="id_achat" required onchange="verifierMontantLigne()">
+                 <option value="" disabled selected>-- Sélectionner l'achat --</option>
+                {% for ach in achats %}
+                <option value="{{ ach.id_achat }}" data-montant="{{ ach.reste_a_payer }}">
+                 Achat N° {{ ach.id_achat }} du {{ ach.date_achat.strftime('%d/%m/%Y') }} - {{ ach.fournisseur.nom }} (Reste : {{ ach.reste_a_payer|int }} FCFA)
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="montant_paye">Montant Décaissé (FCFA) * :</label>
+                <input type="number" name="montant_paye" id="montant_paye" min="1" step="any" placeholder="Ex: 50000" required>
+            </div>
+            <div class="form-group">
+                <label for="date_paiement">Date du Paiement * :</label>
+                <input type="date" name="date_paiement" id="date_paiement" required>
+            </div>
+            <div class="form-group" style="grid-column: span 1;">
+                <label for="mode_paiement">Mode de Paiement * :</label>
+                <select name="mode_paiement" id="mode_paiement" required>
+                    <option value="Espèces">Espèces (Caisse)</option>
+                    <option value="Wave">Wave</option>
+                    <option value="Orange Money">Orange Money</option>
+                    <option value="Chèque">Chèque Bancaire</option>
+                    <option value="Virement">Virement</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="reference">N° Pièce Comptable / Numéro de Référence :</label>
+                <input type="text" name="reference" id="reference" placeholder="Ex: Trans. N° 93849204">
+            </div>
+            <button type="submit" class="btn-submit" id="btn-principal">Valider l'Enregistrement du Décaissement</button>
+        </form>
+
+        <!-- BANNIÈRE KPI DE SYNTHÈSE -->
+        <div class="kpi-banner">
+            <div>
+                <strong style="color: #c0392b; font-size: 15px;">Registre Central des Flux Sortants</strong>
+                <div style="font-size: 12px; color: #666; margin-top: 4px;">Historique des décaissements réels affectés aux fournisseurs tiers.</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; color: #7f8c8d; text-transform: uppercase; font-weight: bold;">Total Décaissements Période</div>
+                <span style="font-size: 20px; font-weight: bold; color: #c0392b;">{{ total_decaisse|int }} FCFA</span>
+            </div>
+        </div>
+
+        <!-- ZONE DE FILTRAGE SERVEUR -->
+        <form method="GET" action="{{ url_for('gestion_paiements_achats') }}" class="filter-print-zone print-hide" style="display: flex; gap: 15px; background: #eef2f5; padding: 15px; border-radius: 6px; margin-bottom: 20px; align-items: center; border: 1px solid #cfd9db;">
+            <label style="font-weight: bold; font-size: 14px;">Filtrer :</label>
+            <select name="filter_mois" onchange="this.form.submit()" style="padding: 6px; border-radius: 4px;">
+                <option value="01" {% if mois_sel == '01' %}selected{% endif %}>Janvier</option>
+                <option value="02" {% if mois_sel == '02' %}selected{% endif %}>Février</option>
+                <option value="03" {% if mois_sel == '03' %}selected{% endif %}>Mars</option>
+                <option value="04" {% if mois_sel == '04' %}selected{% endif %}>Avril</option>
+                <option value="05" {% if mois_sel == '05' %}selected{% endif %}>Mai</option>
+                <option value="06" {% if mois_sel == '06' %}selected{% endif %}>Juin</option>
+                <option value="07" {% if mois_sel == '07' %}selected{% endif %}>Juillet</option>
+                <option value="08" {% if mois_sel == '08' %}selected{% endif %}>Août</option>
+                <option value="09" {% if mois_sel == '09' %}selected{% endif %}>Septembre</option>
+                <option value="10" {% if mois_sel == '10' %}selected{% endif %}>Octobre</option>
+                <option value="11" {% if mois_sel == '11' %}selected{% endif %}>Novembre</option>
+                <option value="12" {% if mois_sel == '12' %}selected{% endif %}>Décembre</option>
+            </select>
+            <select name="filter_annee" onchange="this.form.submit()" style="padding: 6px; border-radius: 4px;">
+                {% for annee in liste_annees %}
+                    <option value="{{ annee }}" {% if annee_sel == annee|string %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn-back" style="background-color: #1e2229; border: none; cursor: pointer; margin-left: auto; padding: 7px 15px;" onclick="window.print()">Imprimer Registre</button>
+        </form>
+
+       <!-- FIN DU FORMULAIRE DE FILTRAGE SERVEUR -->
+</form>
+
+<!-- TABLEAU CENTRAL NETTOYÉ -->
+<table>
+<thead>
+    <tr>
+        <th>Date</th>
+        <th>Achat N°</th>
+        <th>Fournisseur</th>
+        <th>Montant Payé</th>
+        <th>Mode</th>
+        <th>Pièce / Réf</th>
+        <th>Opérateur</th>
+        <th class="print-hide">Actions</th>
+    </tr>
+</thead>
+<tbody>
+{% if paiements %}
+{% for p in paiements %}
+<tr id="row-{{ p.id_paiement_achat }}">
+    <!-- Date -->
+    <td>
+        <span class="view-mode"><strong>{{ p.date_paiement.strftime('%d/%m/%Y') }}</strong></span>
+        <input type="date" class="edit-mode form-control" style="display:none;" value="{{ p.date_paiement.strftime('%Y-%m-%d') }}" id="edit-date-{{ p.id_paiement_achat }}">
+    </td>
+    
+    <!-- Achat ID -->
+    <td>
+        <span style="font-family: monospace; font-weight: bold; background: #eef2f5; padding: 2px 6px; border-radius: 3px;">#ACH-{{ p.id_achat }}</span>
+    </td>
+    
+    <!-- Fournisseur -->
+    <td>{{ p.achat.fournisseur.nom }}</td>
+    
+    <!-- Montant Payé -->
+    <td>
+        <span class="view-mode" style="font-weight: bold; color: #c0392b;">{{ p.montant_paye|int }} FCFA</span>
+        <input type="number" class="edit-mode form-control" style="display:none; width:90px;" value="{{ p.montant_paye|int }}" id="edit-montant-{{ p.id_paiement_achat }}">
+    </td>
+    
+    <!-- Mode -->
+    <td>
+        <span class="view-mode badge" style="background:#eef2f5; padding:3px 6px; border-radius:4px; font-size:11px;">{{ p.mode_paiement }}</span>
+        <select class="edit-mode form-control" style="display:none;" id="edit-mode-{{ p.id_paiement_achat }}">
+            <option value="Espèces" {% if p.mode_paiement == 'Espèces' %}selected{% endif %}>Espèces (Caisse)</option>
+            <option value="Wave" {% if p.mode_paiement == 'Wave' %}selected{% endif %}>Wave</option>
+            <option value="Orange Money" {% if p.mode_paiement == 'Orange Money' %}selected{% endif %}>Orange Money</option>
+            <option value="Chèque" {% if p.mode_paiement == 'Chèque' %}selected{% endif %}>Chèque Bancaire</option>
+            <option value="Virement" {% if p.mode_paiement == 'Virement' %}selected{% endif %}>Virement</option>
+        </select>
+    </td>
+    
+    <!-- Pièce / Réf -->
+    <td>
+        <span class="view-mode" style="color:#555;">{{ p.reference or '-' }}</span>
+        <input type="text" class="edit-mode form-control" style="display:none;" value="{{ p.reference or '' }}" id="edit-ref-{{ p.id_paiement_achat }}">
+    </td>
+    
+    <!-- Opérateur -->
+    <td><span style="font-weight: bold; color:#2e86c1;">@{{ p.user.NomUtilisateur }}</span></td>
+    
+    <!-- Actions (Modifier / Valider l'encaissement) -->
+    <!-- Colonne Actions mise à jour dans le tableau HTML -->
+<td class="print-hide">
+    <!-- Mode Affichage -->
+    <button type="button" class="btn-back view-mode" style="background-color: #2980b9; padding: 4px 8px;" onclick="basculerEdition('{{ p.id_paiement_achat }}')">Modifier</button>
+    
+    <!-- Mode Édition (Conteneur Flexbox pour un alignement propre) -->
+    <div class="edit-mode" style="display:none; gap: 5px;">
+        <button type="button" style="background-color: #27ae60; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="sauvegarderModification('{{ p.id_paiement_achat }}', '{{ p.id_achat }}')">Valider</button>
+        <button type="button" style="background-color: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="annulerEdition('{{ p.id_paiement_achat }}')">Annuler</button>
+    </div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 20px; font-weight: bold; background: #fafafa;">
+        ℹ Aucun règlement fournisseur répertorié pour cette période.
+    </td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+
+        <!-- BLOC DE PAGINATION NATIVE EN DEHORS DU TABLEAU -->
+        <div class="pagination-block print-hide">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('gestion_paiements_achats', page=pagination.prev_num, filter_mois=mois_sel, filter_annee=annee_sel) }}" class="pagination-btn">« Précédent</a>
+            {% else %}
+                <span class="pagination-btn disabled">« Précédent</span>
+            {% endif %}
+
+            <span class="pagination-info">
+                Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} fiches au total)
+            </span>
+
+            {% if pagination.has_next %}
+                <a href="{{ url_for('gestion_paiements_achats', page=pagination.next_num, filter_mois=mois_sel, filter_annee=annee_sel) }}" class="pagination-btn">Suivant »</a>
+            {% else %}
+                <span class="pagination-btn disabled">Suivant »</span>
+            {% endif %}
+        </div>
+
+    </div> <!-- Fin du container -->
+
+    <!-- SCRIPT JAVASCRIPT TECHNIQUE -->
+   <!-- SCRIPT DE SYNCHRONISATION TECHNIQUE DE LA PÉRIODE COMPTABLE -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Initialisation par défaut du champ de saisie de date du formulaire
+    var dateInput = document.getElementById('date_paiement');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // 2. CORRECTION CRUCIALE : Injection forcée des filtres actifs du serveur Flask
+    var printMois = document.getElementById('print_mois');
+    var printAnnee = document.getElementById('print_annee');
+    
+    if (printMois) {
+        printMois.innerText = "{{ mois_sel }}";
+    }
+    if (printAnnee) {
+        printAnnee.innerText = "{{ annee_sel }}";
+    }
+});
+// 1. Contrôle en temps réel sur le formulaire principal de saisie
+function verifierMontantLigne() {
+    var select = document.getElementById('id_achat');
+    var inputMontant = document.getElementById('montant_paye');
+    var optionSelectionnee = select.options[select.selectedIndex];
+    
+    if(!optionSelectionnee.value) return;
+
+    var montantAttendu = parseFloat(optionSelectionnee.getAttribute('data-montant'));
+    
+    inputMontant.addEventListener('change', function() {
+        var montantSaisi = parseFloat(inputMontant.value);
+        if (montantSaisi !== montantAttendu) {
+            alert("⚠️ Attention : Le montant saisi (" + montantSaisi + " FCFA) est différent du montant restant dû sur ce bon d'achat (" + montantAttendu + " FCFA).");
+        }
+    });
+}
+
+// 2. Basculer une ligne du tableau en mode Édition
+function basculerEdition(idPaiement) {
+    var row = document.getElementById('row-' + idPaiement);
+    // Masquer le mode vue, afficher le mode édition
+    row.querySelectorAll('.view-mode').forEach(el => el.style.display = 'none');
+    row.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'inline-block');
+}
+
+// 3. Envoyer la modification via une requête asynchrone (Fetch) au serveur
+function sauvegarderModification(idPaiement, idAchat) {
+    var montant = document.getElementById('edit-montant-' + idPaiement).value;
+    var date = document.getElementById('edit-date-' + idPaiement).value;
+    var mode = document.getElementById('edit-mode-' + idPaiement).value;
+    var ref = document.getElementById('edit-ref-' + idPaiement).value;
+
+    if (!montant || !date) {
+        alert("Veuillez remplir tous les champs obligatoires.");
+        return;
+    }
+
+    // Création des données à envoyer au format Formulaire POST standard
+    var formData = new FormData();
+    formData.append('id_achat', idAchat);
+    formData.append('montant_paye', montant);
+    formData.append('mode_paiement', mode);
+    formData.append('reference', ref);
+    formData.append('date_paiement', date);
+    formData.append('modifier_id_paiement', idPaiement); // Indicateur de modification pour Flask si nécessaire
+
+    // Soumission au serveur
+    fetch("{{ url_for('gestion_paiements_achats') }}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if(response.ok) {
+            alert("✔ Modification enregistrée avec succès !");
+            window.location.reload(); // Recharge la page pour actualiser les listes et les calculs comptables
+        } else {
+            alert("Une erreur est survenue lors de la mise à jour.");
+        }
+    })
+    .catch(error => console.error("Erreur:", error));
+}
+// Fonction pour quitter le mode édition sans sauvegarder
+function annulerEdition(idPaiement) {
+    var row = document.getElementById('row-' + idPaiement);
+    
+    // Réaffiche le mode classique et masque le mode édition
+    row.querySelectorAll('.view-mode').forEach(el => el.style.display = 'inline-block');
+    row.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'none');
+    
+    // Optionnel : Réinitialise les inputs du tableau avec leurs valeurs d'origine (anti-altération accidentelle)
+    var inputMontant = document.getElementById('edit-montant-' + idPaiement);
+    if(inputMontant) inputMontant.value = inputMontant.defaultValue;
+    
+    var inputDate = document.getElementById('edit-date-' + idPaiement);
+    if(inputDate) inputDate.value = inputDate.defaultValue;
+    
+    var inputRef = document.getElementById('edit-ref-' + idPaiement);
+    if(inputRef) inputRef.value = inputRef.defaultValue;
+}
+
+</script>
+</body>
+</html>
+
+

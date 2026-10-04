@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion des Classes</title>
+<style>
+body { font-family: 'Segoe UI', Arial, sans-serif; margin: 30px; 
+background-color: #f4f4f9; color: #333; }
+.container { max-width: 1000px; background: white; padding: 30px; 
+border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin: 0 auto; }
+h2 { color: #1e2229; border-bottom: 2px solid #ddd; padding-bottom: 
+10px; margin-top: 0; }
+h3 { color: #2c3e50; margin-top: 20px; margin-bottom: 15px; }
+.nav-link { margin-bottom: 20px; display: inline-block; color: 
+#0056b3; text-decoration: none; font-weight: bold; }
+.forms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 
+25px; margin-bottom: 30px; }
+.card { background: #fafafa; padding: 20px; border-radius: 6px; 
+border: 1px solid #e0e0e0; }
+.form-group { margin-bottom: 15px; }
+label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
+input[type="text"], input[type="number"], input[type="file"] { width: 
+100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: 
+border-box; }
+.code-badge { display: inline-block; background-color: #17a2b8; color: 
+white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-family: 
+monospace; margin-top: 5px; }
+.code-badge.waiting { background-color: #6c757d; }
+button { padding: 12px; border: none; border-radius: 4px; cursor: 
+pointer; font-weight: bold; font-size: 0.95rem; width: 100%; transition: 
+opacity 0.2s; }
+.btn-primary { background-color: #007bff; color: white; }
+.btn-success { background-color: #28a745; color: white; }
+.btn-secondary { background-color: #6c757d; color: white; margin-top: 10px; }
+
+/* Styles du tableau et interactivité */
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+th { background-color: #1e2229; color: white; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.annee-highlight { background-color: #e2f0d9; color: #385723; padding: 
+4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
+.error { color: #721c24; background-color: #f8d7da; padding: 12px; 
+border-radius: 4px; margin-bottom: 15px; }
+.success { color: #155724; background-color: #d4edda; padding: 12px; 
+border-radius: 4px; margin-bottom: 15px; }
+
+/* Styles pour rendre le tableau cliquable */
+.clickable-row { cursor: pointer; transition: background-color 0.2s; }
+.clickable-row:hover { background-color: #e9ecef !important; }
+
+/* MODALE PERSONNALISÉE EN CSS PUR */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); display: none; align-items: center;
+    justify-content: center; z-index: 1000;
+}
+.modal-box {
+    background: white; padding: 30px; border-radius: 8px;
+    width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h2>Configuration des Classes</h2>
+<p><a href="/" class="nav-link">← Retour au tableau de bord</a></p>
+
+<!-- Gestion des notifications flash (Erreurs / Succès) -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="{{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="forms-grid">
+<!-- FORMULAIRE IMPORT EXCEL -->
+<div class="card">
+<h3>📁 Importer un fichier Excel</h3>
+<form action="/importer/classes" method="POST" enctype="multipart/form-data">
+<div class="form-group">
+<label>Fichier des classes (.xlsx) :</label>
+<input type="file" name="fichier_excel" accept=".xlsx, .xls" required>
+</div>
+<button type="submit" class="btn-primary">Lancer l'importation</button>
+</form>
+</div>
+
+<!-- FORMULAIRE AJOUT MANUEL -->
+<div class="card">
+<h3>📝 Ajout d'une classe manuelle</h3>
+<form action="/ajouter_classe_manuel" method="POST">
+<div class="form-group">
+<label>Code automatique généré :</label>
+<div id="code_preview" class="code-badge waiting">En attente...</div>
+</div>
+<div class="form-group">
+<label>Nom de la Classe :</label>
+<input type="text" id="NomClasse" name="NomClasse" placeholder="Ex: 6A" required>
+</div>
+<div class="form-group">
+<label>Montant Inscription (FCFA) :</label>
+<input type="number" name="Montant" placeholder="Ex: 50000" min="0" required>
+</div>
+<div class="form-group">
+<label>Mensualité (FCFA) :</label>
+<input type="number" name="Mensualite" placeholder="Ex: 25000" min="0" required>
+</div>
+<div class="form-group">
+<label>Année Scolaire :</label>
+<input type="text" id="AnneeScolaire" name="AnneeScolaire" value="{{ annee_scolaire }}" required>
+</div>
+<button type="submit" class="btn-success">Ajouter la classe</button>
+</form>
+</div>
+</div>
+
+<!-- LISTE DES CLASSES DU TABLEAU -->
+<h3>📋 Classes de l'année scolaire en cours : <span class="annee-highlight">{{ annee_scolaire }}</span></h3>
+<table>
+<thead>
+<tr>
+<th>CodeClasses</th>
+<th>NomClasse</th>
+<th>Montant Inscription</th>
+<th>Mensualité</th>
+<th>Année Scolaire</th>
+</tr>
+</thead>
+<tbody>
+{% for classe in classes %}
+<tr class="clickable-row" 
+    data-code="{{ classe.CodeClasses }}" 
+    data-nom="{{ classe.NomClasse }}" 
+    data-montant="{{ classe.Montant }}" 
+    data-mensualite="{{ classe.Mensualite }}" 
+    data-annee="{{ classe.AnneeScolaire }}">
+<td><strong>{{ classe.CodeClasses }}</strong></td>
+<td>{{ classe.NomClasse }}</td>
+<td>{{ classe.Montant }} FCFA</td>
+<td>{{ classe.Mensualite }} FCFA</td>
+<td>{{ classe.AnneeScolaire }}</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="5" style="text-align: center; color: #777; padding: 20px;">Aucune classe enregistrée.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<!-- FENÊTRE MODALE D'ÉDITION SÉCURISÉE (CORRIGÉE SANS URL_FOR) -->
+<div class="modal-overlay" id="modalModifier">
+    <div class="modal-box">
+        <h3>✏️ Modifier la Classe</h3>
+        <!-- Utilisation d'un chemin d'accès absolu en dur pour éviter les conflits d'URL -->
+        <form action="/modifier_classe" method="POST" id="formModifierClasse">
+            <input type="hidden" name="CodeClasses" id="mod_code_classes">
+            
+            <div class="form-group">
+                <label>Nom de la classe :</label>
+                <input type="text" name="NomClasse" id="mod_nom_classe" maxlength="50" required>
+            </div>
+            <div class="form-group">
+                <label>Montant Inscription (FCFA) :</label>
+                <input type="number" name="Montant" id="mod_montant" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Mensualité (FCFA) :</label>
+                <input type="number" name="Mensualite" id="mod_mensualite" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Année Scolaire :</label>
+                <input type="text" id="mod_annee" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+            </div>
+            
+            <div class="modal-buttons">
+                <button type="submit" class="btn-success">Enregistrer</button>
+                <button type="button" class="btn-secondary" id="btnFermerModal">Annuler</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// --- LOGIQUE AUTOMATIQUE DU FORMULAIRE DE CRÉATION ---
+const inputNom = document.getElementById('NomClasse');
+const inputAnnee = document.getElementById('AnneeScolaire');
+const previewBadge = document.getElementById('code_preview');
+
+function rafraichirCode() {
+    const nom = inputNom.value.trim().toUpperCase();
+    const annee = inputAnnee.value.trim();
+    if (nom && annee) {
+        previewBadge.textContent = `${nom}-${annee}`;
+        previewBadge.classList.remove('waiting');
+    } else {
+        previewBadge.textContent = "En attente...";
+        previewBadge.classList.add('waiting');
+    }
+}
+inputNom.addEventListener('input', rafraichirCode);
+inputAnnee.addEventListener('input', rafraichirCode);
+rafraichirCode();
+
+// --- LOGIQUE D'OUVERTURE ET REMPLISSAGE DE LA MODALE AU CLIC ---
+const modal = document.getElementById('modalModifier');
+const btnFermer = document.getElementById('btnFermerModal');
+
+document.querySelectorAll('.clickable-row').forEach(row => {
+    row.addEventListener('click', function() {
+        document.getElementById('mod_code_classes').value = this.dataset.code;
+        document.getElementById('mod_nom_classe').value = this.dataset.nom;
+        document.getElementById('mod_montant').value = this.dataset.montant;
+        document.getElementById('mod_mensualite').value = this.dataset.mensualite;
+        document.getElementById('mod_annee').value = this.dataset.annee;
+        
+        modal.style.display = 'flex';
+    });
+});
+
+btnFermer.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+});
+</script>
+</body>
+</html>

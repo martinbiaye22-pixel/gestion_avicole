@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Lots Avicoles Multi-Fermes</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f6f9; 
+            color: #333; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1100px; 
+            margin: 20px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+        }
+        .header-block { 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 12px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        h2 { 
+            color: #1e2229; 
+            margin: 0; 
+            font-size: 22px; 
+        }
+        .btn-back { 
+            background-color: #7f8c8d; 
+            color: white; 
+            padding: 8px 15px; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        .btn-back:hover { 
+            background-color: #6c7a7d; 
+        }
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 6px; 
+            border: 1px solid #e6e6e6; 
+            margin-bottom: 30px; 
+        }
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .form-group.full-width { 
+            grid-column: span 2; 
+        }
+        label { 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+            color: #2c3e50; 
+            font-size: 13px; 
+        }
+        input[type="text"], input[type="number"], input[type="date"], select { 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            box-sizing: border-box; 
+        }
+        .btn-submit { 
+            background-color: #2ecc71; 
+            color: white; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: bold; 
+            grid-column: span 2; 
+            transition: background 0.2s; 
+        }
+        .btn-submit:hover { 
+            background-color: #27ae60; 
+        }
+        .btn-edit-mode { 
+            background-color: #3498db; 
+        }
+        .btn-edit-mode:hover { 
+            background-color: #2980b9; 
+        }
+        .btn-cancel { 
+            display: none; 
+            background-color: #e74c3c; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 14px; 
+            text-decoration: none; 
+            margin-top: -5px; 
+            margin-bottom: 15px; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
+        .alert { 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: bold; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            table-layout: fixed; 
+            font-size: 13px; 
+        }
+        th, td { 
+            padding: 4px 8px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+            vertical-align: middle; 
+            word-wrap: break-word; 
+        }
+        th { 
+            background-color: #1e2229; 
+            color: white; 
+            font-size: 14px; 
+        }
+        tr:hover { 
+            background-color: #f1f4f6; 
+        }
+        .badge { 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: white; 
+            display: inline-block; 
+        }
+        .badge-pondeuse { 
+            background-color: #e67e22; 
+        }
+        .badge-chair { 
+            background-color: #9b59b6; 
+        }
+        .btn-action-edit { 
+            background-color: #f39c12; 
+            color: white; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px; 
+            transition: background 0.2s; 
+        }
+        .btn-action-edit:hover { 
+            background-color: #d35400; 
+        }
+        .print-hide { 
+            display: block; 
+        }
+        
+        /* Style du bloc de Pagination native */
+        .pagination-block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e6ebeb;
+        }
+        .pagination-btn {
+            background-color: white;
+            color: #2c3e50;
+            padding: 7px 14px;
+            text-decoration: none;
+            border: 1px solid #cfd9db;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .pagination-btn:hover:not(.disabled) {
+            background-color: #f1f4f6;
+        }
+        .pagination-btn.disabled {
+            color: #bdc3c7;
+            cursor: not-allowed;
+            background-color: #f8f9fa;
+            border-color: #ebebeb;
+        }
+        .pagination-info {
+            font-size: 13px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-block">
+        <h2 id="form-title">⚙ Enregistrement Multi-Fermes (Lots de Volailles)</h2>
+        <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- FORMULAIRE DE SAISIE ET DE MODIFICATION -->
+    <form action="{{ url_for('ajouter_lot') }}" method="POST" id="lotForm">
+        <input type="hidden" id="id_lot_modif" name="id_lot_modif" value="">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="nom_ferme">Nom de la Ferme / Site de Location * :</label>
+                <input type="text" id="nom_ferme" name="nom_ferme" placeholder="Ex: Ferme Mbao, Site Thiaroye" required>
+            </div>
+            <div class="form-group">
+                <label for="type_elevage">Type d'Élevage * :</label>
+                <select id="type_elevage" name="type_elevage" required>
+                    <option value="" disabled selected>-- Choisir le type --</option>
+                    <option value="Poules Pondeuses">Poules Pondeuses (Œufs)</option>
+                    <option value="Poulets de Chair">Poulets de Chair (Viande)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="souche">Souche / Race (Optionnel) :</label>
+                <input type="text" id="souche" name="souche" placeholder="Ex: Cobb 500, Lohmann">
+            </div>
+            <div class="form-group">
+                <label for="date_arrivee">Date d'Arrivée du Lot * :</label>
+                <input type="date" id="date_arrivee" name="date_arrivee" required>
+            </div>
+            <div class="form-group full-width">
+                <label for="effectif_initial">Effectif Reçu (Nombre de sujets) * :</label>
+                <input type="number" id="effectif_initial" name="effectif_initial" min="1" placeholder="Ex: 500" required>
+            </div>
+            <button type="submit" id="submitBtn" class="btn-submit">✔ Enregistrer le Lot sur ce Site</button>
+            <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">❌ Annuler la modification</button>
+        </div>
+    </form>
+
+    <!-- ZONE DE FILTRAGE PAR FERME -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e6e6e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+        <label for="select_ferme" style="font-weight: bold; color: #2c3e50; font-size: 14px;">Filtrer l'historique par Ferme / Site :</label>
+        <select id="select_ferme" onchange="filtrerParListe()" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white; min-width: 250px;">
+            <option value="tous">-- Toutes les Fermes d'Exploitation --</option>
+            {% for f in liste_fermes_filtre %}
+                <option value="{{ f.lower() }}">{{ f }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <h2>📋 Registre Central des Lots Actifs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Code Lot</th>
+                <th style="width: 20%;">Type d'Élevage</th>
+                <th style="width: 30%;">Détails Stockés (Base de données)</th>
+                <th style="width: 15%;">Date d'Arrivée</th>
+                <th style="width: 12%;">Effectif Initial</th>
+                <th style="width: 8%; text-align: center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if lots %}
+                {% for lot in lots %}
+                    <tr id="row-{{ lot.id_lot }}">
+                        <td><strong>{{ lot.code_lot }}</strong></td>
+                        <td>
+                            {% if lot.type_elevage == 'Poules Pondeuses' %}
+                                <span class="badge badge-pondeuse" id="type-{{ lot.id_lot }}">{{ lot.type_elevage }}</span>
+                            {% else %}
+                                <span class="badge badge-chair" id="type-{{ lot.id_lot }}">{{ lot.type_elevage }}</span>
+                            {% endif %}
+                        </td>
+                        <td id="details-{{ lot.id_lot }}" data-brut="{{ lot.souche }}">{{ lot.souche }}</td>
+                        <td id="date-{{ lot.id_lot }}" data-dateiso="{{ lot.date_arrivee }}">{{ lot.date_arrivee.strftime('%d/%m/%Y') }}</td>
+                        <td id="effectif-{{ lot.id_lot }}">{{ lot.effectif_initial }} sujets</td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ lot.id_lot }}')">✏Modifier</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #7f8c8d; font-weight: bold; padding: 20px; background: #fafafa;">
+                        ℹ Aucun lot actif disponible sur le périmètre configuré de votre compte.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    </table> <!-- Fin de la table existante -->
+
+<!-- BLOC DE PAGINATION DYNAMIQUE -->
+<div class="pagination-block print-hide">
+    <!-- Bouton Précédent -->
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('liste_lots', page=pagination.prev_num) }}" class="pagination-btn">« Précédent</a>
+    {% else %}
+        <span class="pagination-btn disabled">« Précédent</span>
+    {% endif %}
+
+    <!-- Informations d'état -->
+    <span class="pagination-info">
+        Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} lots au total)
+    </span>
+
+    <!-- Bouton Suivant -->
+    {% if pagination.has_next %}
+        <a href="{{ url_for('liste_lots', page=pagination.next_num) }}" class="pagination-btn">Suivant »</a>
+    {% else %}
+        <span class="pagination-btn disabled">Suivant »</span>
+    {% endif %}
+</div>
+
+</div>
+
+<script>
+// Fonction pour basculer le formulaire du haut en mode Édition
+function chargerDonnees(id) {
+    document.getElementById('form-title').innerText = "✏ Modification du Lot existant";
+    document.getElementById('submitBtn').innerText = "✔ Confirmer et Modifier les données du Lot";
+    document.getElementById('submitBtn').classList.add('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "inline-block";
+    
+    var typeText = document.getElementById('type-' + id).innerText;
+    var rawDetails = document.getElementById('details-' + id).getAttribute('data-brut');
+    var dateIso = document.getElementById('date-' + id).getAttribute('data-dateiso');
+    var effectif = document.getElementById('effectif-' + id).innerText;
+    
+    var ferme = "";
+    var souche = "";
+    
+    // Extraction textuelle sécurisée du nom de la ferme et de la souche
+    if (rawDetails.includes("Ferme : ")) {
+        ferme = rawDetails.replace("Ferme : ", "").trim();
+        souche = "";
+    } else if (rawDetails.includes(" (") && rawDetails.includes(")")) {
+        var parts = rawDetails.split(" (");
+        souche = parts[0].trim();                      // Première partie : la souche (ex: Cobb 500)
+        ferme = parts[1].replace(")", "").trim();      // Deuxième partie : la ferme (ex: Ferme Mbao)
+    } else {
+        ferme = rawDetails.trim();
+        souche = "";
+    }
+    
+    // Injection des valeurs nettoyées dans les zones de texte du formulaire
+    document.getElementById('id_lot_modif').value = id;
+    document.getElementById('nom_ferme').value = ferme;
+    document.getElementById('type_elevage').value = typeText;
+    document.getElementById('souche').value = souche;
+    document.getElementById('date_arrivee').value = dateIso;
+    document.getElementById('effectif_initial').value = parseInt(effectif);
+    
+    // Remontée fluide vers le haut de l'écran vers les champs de texte
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function annulerModification() {
+    document.getElementById('lotForm').reset();
+    document.getElementById('id_lot_modif').value = "";
+    document.getElementById('form-title').innerText = "🐔 Enregistrement Multi-Fermes (Lots de Volailles)";
+    document.getElementById('submitBtn').innerText = "💾 Enregistrer le Lot sur ce Site";
+    document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "none";
+}
+// Événement exécuté au chargement complet de la page
+window.addEventListener('DOMContentLoaded', (event) => {
+    genererListeFermes();
+});
+
+function genererListeFermes() {
+    var select = document.getElementById("select_ferme");
+    var table = document.querySelector("table tbody");
+    var rows = table.getElementsByTagName("tr");
+    var fermesUniques = new Set();
+
+    // 1. Extraction et nettoyage de toutes les fermes présentes dans le tableau
+    for (var i = 0; i < rows.length; i++) {
+        var tdDetails = rows[i].querySelector("td[id^='details-']");
+        if (tdDetails) {
+            var rawDetails = tdDetails.getAttribute('data-brut') || tdDetails.innerText;
+            var ferme = "";
+
+            // Extraction du nom de la ferme selon le format de stockage
+            if (rawDetails.includes("Ferme : ")) {
+                ferme = rawDetails.replace("Ferme : ", "").trim();
+            } else if (rawDetails.includes(" (") && rawDetails.includes(")")) {
+                var parts = rawDetails.split(" (");
+                ferme = parts[1].replace(")", "").trim();
+            } else {
+                ferme = rawDetails.trim();
+            }
+
+            if (ferme !== "" && !ferme.includes("Aucun lot actif")) {
+                fermesUniques.add(ferme);
+            }
+        }
+    }
+
+    // 2. Ajout dynamique des fermes triées par ordre alphabétique dans le <select>
+    Array.from(fermesUniques).sort().forEach(function(nomFerme) {
+        var el = document.createElement("option");
+        el.textContent = nomFerme;
+        el.value = nomFerme.toLowerCase();
+        select.appendChild(el);
+    });
+}
+
+function filtrerParListe() {
+    var select = document.getElementById("select_ferme");
+    var filter = select.value;
+    var table = document.querySelector("table tbody");
+    var rows = table.getElementsByTagName("tr");
+
+    for (var i = 0; i < rows.length; i++) {
+        var tdDetails = rows[i].querySelector("td[id^='details-']");
+        
+        if (tdDetails) {
+            var txtValue = (tdDetails.getAttribute('data-brut') || tdDetails.innerText).toLowerCase();
+            
+            // Affichage si 'tous' est sélectionné ou si le nom de la ferme correspond
+            if (filter === "tous" || txtValue.includes(filter)) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
+}
+
+</script>
+</body>
+</html>

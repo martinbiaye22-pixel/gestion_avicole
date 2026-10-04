@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Comptable des Dépenses &amp; Charges</title>
+<style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+    .header-block { border-bottom: 2px solid #e74c3c; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+    h2, h3 { color: #1e2229; margin: 0; font-size: 20px; }
+    .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+
+    /* STRUCTURE DU CADRE UNIQUE BLANC */
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .full-width { grid-column: span 3; }
+    label { font-weight: bold; font-size: 13px; color: #2c3e50; }
+    input, select, textarea { padding: 6px 10px; height: 34px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; background: white; }
+    textarea { height: auto; }
+
+    .btn-submit { background-color: #e74c3c; color: white; padding: 8px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; margin-left: auto; height: 36px; }
+    .btn-submit:hover { background-color: #c0392b; }
+
+    /* REGLEMENT LIGNES COMPACTES ET FINES */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+    th, td { padding: 4px 8px !important; height: 28px !important; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; font-size: 13px; word-wrap: break-word; line-height: 1.1 !important; }
+    th { background-color: #1e2229; color: white; font-weight: bold; }
+    tr:hover { background-color: #f1f4f6; }
+    
+th:nth-child(1), td:nth-child(1) { width: 12%; } /* Date */
+th:nth-child(2), td:nth-child(2) { width: 18%; } /* Poste */
+th:nth-child(3), td:nth-child(3) { width: 34%; } /* Commentaire */
+th:nth-child(4), td:nth-child(4) { width: 14%; text-align: right; } /* Montant */
+th:nth-child(5), td:nth-child(5) { width: 12%; } /* Opérateur */
+th:nth-child(6), td:nth-child(6) { width: 10%; } /* Action */
+
+    /* --- CONFIGURATION EN-TÊTE IMPRESSION (STYLE COMPACT) --- */
+.print-header {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    display: block;
+}
+.print-header-left {
+    float: left;
+    width: 45%;
+    text-align: left;
+}
+.print-header-right {
+    float: right;
+    width: 50%;
+    text-align: right;
+    padding-top: 5px;
+}
+.clear-fix {
+    clear: both;
+}
+.print-separator {
+    border: none;
+    border-top: 2px solid #000000; /* Ligne noire épaisse identique à l'exemple */
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+/* --- REGLEMENT DES LIGNES COMPACTES SUR ECRAN --- */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    table-layout: fixed; 
+}
+th, td { 
+    padding: 6px 8px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+    font-size: 13px; 
+    word-wrap: break-word; 
+}
+th { background-color: #1e2229; color: white; font-weight: bold; }
+
+/* --- STYLE UNIQUE POUR L'EN-TÊTE --- */
+.print-header { width: 100%; margin-bottom: 15px; display: none; }
+.print-header-left { float: left; width: 45%; text-align: left; }
+.print-header-right { float: right; width: 50%; text-align: right; padding-top: 5px; }
+.clear-fix { clear: both; }
+.print-separator { border: none; border-top: 2px solid #000000; margin-top: 10px; margin-bottom: 15px; }
+
+/* --- STYLE STRICT POUR L'IMPRESSION CONTRE LES ERREURS --- */
+@media print {
+    /* Masquer le fond gris de la page et le grand cadre blanc de l'écran */
+    body { background: white !important; padding: 0 !important; margin: 0 !important; }
+    .container { max-width: 100% !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; background: transparent !important; }
+    
+    /* Forcer l'affichage de l'en-tête tout en haut */
+    .print-header { display: block !important; }
+    .print-hide, form, .header-block, #depenseForm, .filter-print-zone { display: none !important; }
+    
+    /* CORRECTION DES BORDURES : On force le traçage des lignes du tableau */
+    table { border: 1px solid #000000 !important; margin-top: 20px !important; }
+    th, td { 
+        border: 1px solid #000000 !important; /* Lignes et colonnes visibles */
+        font-size: 12px !important; 
+        color: #000000 !important; 
+        padding: 6px 8px !important;
+        height: auto !important;
+    }
+    th { background-color: #eaecee !important; color: #000000 !important; }
+}
+/* --- PAGINATION CENTRALISÉE PERMANENTE PROMAS --- */
+.pagination-container {
+    display: flex;
+    justify-content: center; /* Centrage horizontal parfait */
+    align-items: center;
+    gap: 6px;
+    margin: 30px auto 15px auto;
+    padding: 10px;
+    width: 100%;
+}
+.pagination-link {
+    padding: 8px 14px;
+    background-color: #ffffff;
+    color: #1e2229;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    border: 1px solid #cfd9db;
+    transition: all 0.2s ease;
+}
+.pagination-link:hover {
+    background-color: #e74c3c; /* Rappel du rouge de la charte dépenses */
+    color: white;
+    border-color: #e74c3c;
+}
+.pagination-active {
+    padding: 8px 14px;
+    background-color: #1e2229;
+    color: white;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    border: 1px solid #1e2229;
+}
+.pagination-disabled {
+    padding: 8px 14px;
+    background-color: #f8f9fa;
+    color: #bdc3c7;
+    border-radius: 4px;
+    font-size: 13px;
+    border: 1px solid #e6e6e6;
+    cursor: not-allowed;
+}
+.pagination-separator {
+    color: #7f8c8d;
+    padding: 0 5px;
+    font-weight: bold;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+      <div class="header-block">
+        <h2 id="form-title">Registre des Dépenses &amp; Charges</h2>
+        <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+    </div>
+<div class="print-header">
+    <div class="print-header-left">
+        <h1 style="margin: 0; font-size: 24px; font-weight: bold; color: #000; letter-spacing: 0.5px;">
+            {{ entreprise.raison_sociale if entreprise and entreprise.raison_sociale else 'PR' }}
+        </h1>
+        <p style="margin: 6px 0 2px 0; font-size: 13px; color: #333;">
+            {{ entreprise.adresse if entreprise and entreprise.adresse else 'Parcelles Assainies' }}
+        </p>
+        <p style="margin: 2px 0 0 0; font-size: 13px; color: #333;">
+            Tél: {{ entreprise.telephone if entreprise and entreprise.telephone else '+221773456934' }}
+        </p>
+    </div>
+    
+    <div class="print-header-right">
+        <h2 style="margin: 0 0 8px 0; color: #1e2229; font-size: 18px; font-weight: bold;">
+            Registre des Dépenses & Charges
+        </h2>
+        <p style="margin: 0; font-size: 13px; font-weight: bold; color: #000;">
+            Période : <span>{{ periode_impression }}</span>
+        </p>
+
+    </div>
+    <div class="clear-fix"></div>
+    <hr class="print-separator" />
+</div>
+
+
+    <!-- LE GRAND CADRE DE SAISIE AVEC LES 12 CHOIX COULÉS EN DUR -->
+    <form id="depenseForm" method="POST" action="{{ url_for('gestion_depenses_page') }}" class="print-hide" style="margin-bottom: 30px; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid #cfd9db;">
+        <input type="hidden" id="id_depense_modif" name="id_depense_modif" value="">
+        <h3 style="color: #1e2229; margin-top: 0; margin-bottom: 15px; border-left: 4px solid #e74c3c; padding-left: 10px; font-size: 15px;">Enregistrer un nouveau décaissement</h3>
+        
+       <div class="form-grid">
+    <div class="form-group">
+        <label>Nature / Poste de charge * :</label>
+        <select id="select_type_depense" name="id_type_depense" required>
+            <option value="" disabled selected>-- Choisir le type --</option>
+            <option value="Électricité">⚡ Électricité</option>
+            <option value="Eau">💧 Eau</option>
+            <option value="Carburant">⛽ Carburant</option>
+            <option value="Loyer">🏢 Loyer</option>
+            <option value="Entretien">🛠️ Entretien</option>
+            <option value="Réparation">⚙️ Réparation</option>
+            <option value="Transport">📦 Transport</option>
+            <option value="Communication">📞 Communication</option>
+            <option value="WIFI">📶 WIFI</option>
+            <option value="Assurance">🛡️ Assurance</option>
+            <option value="Frais administratifs">📄 Frais administratifs</option>
+            <option value="Frais vétérinaires">📄 Frais vétérinaires</option>
+            <option value="Fournitures">✏️ Fournitures</option>
+            <option value="Autre">💡 Autre</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Montant payé (FCFA) * :</label>
+        <!-- CORRECTION : Ajout de id="input_montant" -->
+        <input type="number" id="input_montant" name="montant" min="1" placeholder="Ex: 25000" required>
+    </div>
+    
+    <div class="form-group">
+        <label>Date de paiement * :</label>
+        <input type="date" name="date_depense" id="date_depense" required>
+    </div>
+    
+    <div class="form-group full-width">
+        <label>Détails / Commentaire :</label>
+        <!-- CORRECTION : Ajout de id="textarea_commentaire" -->
+        <textarea id="textarea_commentaire" name="commentaire" rows="2" placeholder="Ex: Règlement facture Senelec du mois..."></textarea>
+    </div>
+</div>
+
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+        <button type="submit" class="btn-submit">💾 Enregistrer la Dépense</button>
+        <button type="button" id="cancelBtn" class="print-hide" style="display: none; background-color: #7f8c8d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; height: 36px;" onclick="annulerModificationDepense()">Annuler</button>
+        </div>
+    </form>
+
+    <!-- FILTRE CHRONOLOGIQUE -->
+    <div class="filter-print-zone print-hide" style="display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db;">
+        <form method="GET" action="{{ url_for('gestion_depenses_page') }}" style="display: flex; align-items: center; gap: 15px; margin: 0;">
+    <input type="hidden" name="page" value="1"> <!-- Reset forcé à la page 1 -->
+    <label style="font-weight: bold; font-size: 14px;">Filtrer la période :</label>
+    <!-- ... Vos sélecteurs de mois et d'année restent identiques ... -->
+
+            <select name="filter_mois" onchange="this.form.submit()">
+                <option value="01" {% if mois_sel == '01' %}selected{% endif %}>Janvier</option>
+                <option value="02" {% if mois_sel == '02' %}selected{% endif %}>Février</option>
+                <option value="03" {% if mois_sel == '03' %}selected{% endif %}>Mars</option>
+                <option value="04" {% if mois_sel == '04' %}selected{% endif %}>Avril</option>
+                <option value="05" {% if mois_sel == '05' %}selected{% endif %}>Mai</option>
+                <option value="06" {% if mois_sel == '06' %}selected{% endif %}>Juin</option>
+                <option value="07" {% if mois_sel == '07' %}selected{% endif %}>Juillet</option>
+                <option value="08" {% if mois_sel == '08' %}selected{% endif %}>Août</option>
+                <option value="09" {% if mois_sel == '09' %}selected{% endif %}>Septembre</option>
+                <option value="10" {% if mois_sel == '10' %}selected{% endif %}>Octobre</option>
+                <option value="11" {% if mois_sel == '11' %}selected{% endif %}>Novembre</option>
+                <option value="12" {% if mois_sel == '12' %}selected{% endif %}>Décembre</option>
+            </select>
+            <!-- Remplacer le sélecteur filter_annee actuel par celui-ci -->
+            <select name="filter_annee" onchange="this.form.submit()">
+                {% for annee in liste_annees %}
+                <option value="{{ annee }}" {% if annee_sel|string == annee|string %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+            </select>
+
+        </form>
+        <button type="button" class="btn-back" style="background-color: #1e2229; border: none; cursor: pointer; height: 32px; display: flex; align-items: center;" onclick="window.print()">🖨 Imprimer ce journal</button>
+
+    </div>
+
+    <div style="background-color: #fdf2f2; border: 1px solid #fde8e8; padding: 12px 20px; border-radius: 6px; margin-bottom: 25px; text-align: right;">
+        <span style="font-size: 16px; font-weight: bold; color: #c0392b;">Total Cumulé des Charges : {{ total_charges }} FCFA</span>
+    </div>
+
+    <!-- TABLEAU NOMINAL COMPACT -->
+<table>
+<thead>
+    <tr>
+        <th>Date</th>
+        <th>Poste de Charge</th>
+        <th>Détails / Commentaire</th>
+        <th style="text-align: right;">Montant Payé</th>
+        <th>Opérateur</th>
+        <th class="print-hide" style="text-align: center;">Action</th> <!-- Nouvelle colonne -->
+    </tr>
+</thead>
+<tbody>
+{% if depenses %}
+    {% for d in depenses %}
+    <tr>
+        <td><strong>{{ d.date_depense.strftime('%d/%m/%Y') }}</strong></td>
+        <td><span style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{{ d.libelle_type }}</span></td>
+        <td style="color: #666;">{{ d.commentaire or 'Aucun détail' }}</td>
+        <td style="font-weight: bold; color: #c0392b; text-align: right;">{{ d.montant }} FCFA</td>
+        <td style="color: #666;">{{ d.operateur }}</td>
+        <td class="print-hide" style="text-align: center;">
+            <!-- STOCKAGE SÉCURISÉ VIA DES ATTRIBUTS DATA -->
+            <button type="button" class="btn-action-edit" style="background-color: #f1c40f; color: #1e2229; border: 1px solid #d4ac0d; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;"
+                    data-id="{{ d.id_depense }}"
+                    data-type="{{ d.libelle_type }}"
+                    data-montant="{{ d.montant }}"
+                    data-date="{{ d.date_depense }}"
+                    data-commentaire="{{ d.commentaire or '' }}"
+                    onclick="chargerDonneesDepenseDirect(this)">
+                ✏ Modifier
+            </button>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="6" style="text-align: center; color: #7f8c8d; padding: 25px; font-weight: bold; background: #fafafa;">
+            ℹ Aucun décaissement enregistré sur ce journal pour la période sélectionnée.
+        </td>
+    </tr>
+{% endif %}
+</tbody>
+
+</table>
+<!-- BARRE DE PAGINATION CENTRÉE PERMANENTE (MASQUÉE À L'IMPRESSION) -->
+<div class="pagination-container print-hide">
+    <!-- Bouton Précédent -->
+    {% if pagination and pagination.has_prev %}
+        <a href="{{ url_for('gestion_depenses_page', page=pagination.prev_num, filter_mois=mois_sel, filter_annee=annee_sel) }}" class="pagination-link">« Précédent</a>
+    {% else %}
+        <span class="pagination-disabled">« Précédent</span>
+    {% endif %}
+
+    <!-- Numéros de pages dynamiques -->
+    {% if pagination and pagination.pages > 0 %}
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                    <span class="pagination-active">{{ page_num }}</span>
+                {% else %}
+                    <a href="{{ url_for('gestion_depenses_page', page=page_num, filter_mois=mois_sel, filter_annee=annee_sel) }}" class="pagination-link">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="pagination-separator">...</span>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <span class="pagination-active">1</span>
+    {% endif %}
+
+    <!-- Bouton Suivant -->
+    {% if pagination and pagination.has_next %}
+        <a href="{{ url_for('gestion_depenses_page', page=pagination.next_num, filter_mois=mois_sel, filter_annee=annee_sel) }}" class="pagination-link">Suivant »</a>
+    {% else %}
+        <span class="pagination-disabled">Suivant »</span>
+    {% endif %}
+</div>
+</div>
+
+<script>
+function chargerDonneesDepenseDirect(bouton) {
+    // ... votre fonction de modification actuelle (qui fonctionne déjà) ...
+    const id = bouton.getAttribute('data-id');
+    const typePoste = bouton.getAttribute('data-type');
+    const montant = bouton.getAttribute('data-montant');
+    const dateBrute = bouton.getAttribute('data-date');
+    const commentaire = bouton.getAttribute('data-commentaire');
+
+    if (document.getElementById('form-title')) document.getElementById('form-title').innerText = "✏️ Modifier la Dépense #" + id;
+    const submitBtn = document.querySelector("#depenseForm .btn-submit");
+    if (submitBtn) {
+        submitBtn.innerText = "Mettre à jour la Dépense";
+        submitBtn.style.backgroundColor = "#3498db";
+    }
+    if (document.getElementById('cancelBtn')) document.getElementById('cancelBtn').style.display = "inline-block";
+
+    if (document.getElementById('id_depense_modif')) document.getElementById('id_depense_modif').value = id;
+    if (document.getElementById('select_type_depense')) document.getElementById('select_type_depense').value = typePoste;
+    if (document.getElementById('input_montant')) document.getElementById('input_montant').value = parseInt(montant) || 0;
+    if (document.getElementById('date_depense')) document.getElementById('date_depense').value = dateBrute;
+    if (document.getElementById('textarea_commentaire')) document.getElementById('textarea_commentaire').value = commentaire;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 🔴 INSÉRER LA FONCTION MANQUANTE ICI :
+function annulerModificationDepense() {
+    // 1. Remettre le titre initial du formulaire
+    const formTitle = document.getElementById('form-title');
+    if (formTitle) formTitle.innerText = "Enregistrer un nouveau décaissement";
+    
+    // 2. Remettre le bouton de validation en mode enregistrement rouge
+    const submitBtn = document.querySelector("#depenseForm .btn-submit");
+    if (submitBtn) {
+        submitBtn.innerText = "💾 Enregistrer la Dépense";
+        submitBtn.style.backgroundColor = "#e74c3c"; // Retour au rouge initial
+    }
+    
+    // 3. Masquer à nouveau le bouton annuler
+    const cancelBtn = document.getElementById('cancelBtn');
+    if (cancelBtn) cancelBtn.style.display = "none";
+    
+    // 4. Vider intégralement les champs du formulaire
+    const form = document.getElementById('depenseForm');
+    if (form) form.reset();
+    
+    // 5. Réinitialiser l'id caché pour ne pas écraser une ancienne ligne
+    if (document.getElementById('id_depense_modif')) {
+        document.getElementById('id_depense_modif').value = "";
+    }
+    
+    // 6. Remettre la date du jour par défaut
+    const dateInput = document.getElementById('date_depense');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInput = document.getElementById('date_depense');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
+
+</body>
+</html>

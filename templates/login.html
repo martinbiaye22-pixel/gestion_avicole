@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Espace PROMAS</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .login-container { display: flex; justify-content: center; align-items: center; height: 80vh; }
+        form { width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; margin-bottom: 20px; font-size: 24px; text-align: center; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        .error { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; text-align: center; }
+        .success { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <form action="/connexion" method="POST">
+            <h2>Connexion</h2>
+
+            <!-- Zone de notifications Flask -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <label for="NomUtilisateur">Nom d'utilisateur :</label>
+            <input type="text" id="NomUtilisateur" name="NomUtilisateur" required>
+
+            <label for="MotPasse">Mot de passe :</label>
+            <input type="password" id="MotPasse" name="MotPasse" required>
+           
+            <button type="submit">Se connecter</button>
+            <p style="text-align: center; margin-top: 15px;"><a href="/inscription">Créer un compte</a></p>
+        </form>
+    </div>
+
+</body>
+</html>

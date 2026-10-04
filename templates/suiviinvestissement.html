@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi des Investissements - PROMAS</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #e67e22; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-back:hover { background-color: #6c7a7d; }
+        .filter-print-zone { display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; }
+        .filter-box { display: flex; align-items: center; gap: 20px; }
+        .btn-print { background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        .btn-print:hover { background-color: #11151c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; table-layout: fixed; font-size: 13px; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; word-wrap: break-word; vertical-align: middle; }
+        th { background-color: #1e2229; color: white; font-weight: bold; }
+        tr:hover { background-color: #f1f4f6; }
+        .badge { display: inline-block; padding: 4px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; }
+        .badge-solde { background-color: #d4edda; color: #155724; }
+        .badge-credit { background-color: #fff3cd; color: #856404; }
+        
+        /* DESIGN DE LA PAGINATION CENTRALISÉE FORCÉE */
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 30px auto 15px auto; padding: 10px; width: 100%; }
+        .pagination-link { padding: 8px 14px; background-color: #ffffff; color: #1e2229; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px; border: 1px solid #cfd9db; transition: all 0.2s ease; }
+        .pagination-link:hover { background-color: #e67e22; color: white; border-color: #e67e22; }
+        .pagination-active { padding: 8px 14px; background-color: #1e2229; color: white; border-radius: 4px; font-weight: bold; font-size: 13px; border: 1px solid #1e2229; }
+        .pagination-disabled { padding: 8px 14px; background-color: #f8f9fa; color: #bdc3c7; border-radius: 4px; font-size: 13px; border: 1px solid #e6e6e6; cursor: not-allowed; }
+        
+            /* --- VERROUILLAGE ET STYLE STRICT POUR L'IMPRESSION PDF --- */
+    @media print {
+        /* Disparition absolue de la zone de filtrage et éléments écran */
+        .print-hide, 
+        .filter-print-zone, 
+        .filter-print-zone *,
+        form { 
+            display: none !important; 
+            visibility: hidden !important; 
+            height: 0 !important; 
+            padding: 0 !important; 
+            margin: 0 !important; 
+        }
+        
+        /* Activation de l'en-tête officiel */
+        .print-header { display: flex !important; }
+        
+        body { background-color: white; padding: 0; margin: 0; }
+        .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; margin: 0; }
+        
+        /* --- STYLE COMPTABLE DE GRAND-LIVRE (BORDURES ET FOND NOIR FORCÉS) --- */
+        table { 
+            width: 100% !important;
+            border-collapse: collapse !important; 
+            margin-top: 20px !important; 
+            border: 2px solid #000000 !important; /* Bordure extérieure du tableau */
+        }
+        
+        th { 
+            background-color: #1e2229 !important; /* Arrière-plan noir/sombre institutionnel */
+            color: #ffffff !important;            /* Texte blanc pour le contraste */
+            font-weight: bold !important; 
+            text-transform: uppercase !important; 
+            border: 1px solid #000000 !important;  /* Bordures des colonnes d'en-tête */
+            -webkit-print-color-adjust: exact !important; /* Force le fond noir sur Chrome/Edge/Safari */
+            print-color-adjust: exact !important;         /* Force le fond noir (norme standard) */
+        }
+        
+        td { 
+            border: 1px solid #000000 !important;  /* Fait apparaître toutes les lignes et colonnes */
+            color: #000000 !important; 
+            padding: 10px 12px !important; 
+        }
+    }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- En-tête d'impression (Masqué à l'écran, visible sur le PDF) -->
+    <div class="print-header" style="display: none;">
+        <div class="print-header-left">
+            <h1 style="margin: 0; font-size: 20px;">{{ entreprise.raison_sociale or 'Exploitation Avicole' }}</h1>
+            <p style="margin: 4px 0; font-size: 12px;">{{ entreprise.adresse or 'Ferme d\'Élevage' }}</p>
+            <p style="margin: 2px 0; font-size: 12px;">Tél: {{ entreprise.telephone or "" }}</p>
+        </div>
+    </div>
+    <div class="header-block">
+        <h2>📋 Suivi Évolutif et Registre des Investissements</h2>
+        <a href="{{ url_for('index') }}" class="btn-back print-hide">← Tableau de Bord</a>
+    </div>
+
+    <!-- Notification d'alertes -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- FORMULAIRE DE SAISIE D'UN NOUVEL INVESTISSEMENT (RÉSERVÉ ADMIN / MASQUÉ À L'IMPRESSION) -->
+    <form action="{{ url_for('ajouter_investissement') }}" method="POST" class="print-hide" style="background: #f8f9fa; padding: 25px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px;">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e2229; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px;">
+            🆕 Enregistrer un Nouvel Investissement
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Désignation / Nom du bien * :</label>
+                <input type="text" name="designation" placeholder="Ex: Bâtiment Poussinier 3" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Catégorie d'actif * :</label>
+                <select name="categorie" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white;">
+                    <option value="" disabled selected>-- Choisir une catégorie --</option>
+                    <option value="Bâtiment">Bâtiment / Infrastructure</option>
+                    <option value="Matériel">Matériel Avicole / Équipement</option>
+                    <option value="Véhicule">Véhicule / Logistique</option>
+                    <option value="Autre">Autre Immobilisation</option>
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Date d'acquisition * :</label>
+                <input type="date" name="date_acquisition" id="form_date_acquisition" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Fournisseur rattaché * :</label>
+                <select name="id_fournisseur" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white; height: 38px;">
+                    <option value="" disabled selected>-- Choisir le tiers --</option>
+                    {% for f in fournisseurs %}
+                        <option value="{{ f.id_fournisseur }}">{{ f.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Quantité achetée :</label>
+                <input type="number" name="quantite" min="1" value="1" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Montant Total Global (F CFA) * :</label>
+                <input type="number" name="montant" min="1" step="0.01" placeholder="Ex: 4500000" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div style="display: flex; flex-direction: column;">
+                <label style="font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px;">Durée d'amortissement (Années) * :</label>
+                <input type="number" name="duree_amortissement" min="1" max="50" placeholder="Ex: 5" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="submit" style="width: 100%; background-color: #e67e22; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background 0.2s;">
+                    ➕ Créer l'Investissement
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ZONE DES FILTRES HORIZONTAUX -->
+    <div class="filter-print-zone print-hide">
+        <form method="GET" action="{{ url_for('liste_investissements') }}" class="filter-box" style="margin: 0;">
+            <input type="hidden" name="page" value="1">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-weight: bold; font-size: 14px;">Catégorie :</label>
+                <select name="categorie" onchange="this.form.submit()" style="padding: 6px 12px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; background: white;">
+                    <option value="">-- Toutes les Catégories --</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if categorie_active == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+        <button type="button" class="btn-print print-hide" onclick="window.print()">🖨️ Imprimer le registre</button>
+    </div>
+
+    <!-- TABLEAU COMPACT DES DONNÉES -->
+    <table>
+        <thead>
+    <tr>
+        <th style="width: 11%;">Date d'Acq.</th>
+        <th style="width: 20%;">Désignation / Immeuble</th>
+        <th style="width: 12%;">Catégorie</th>
+        <th style="width: 5%;">Qté</th>
+        <th style="width: 12%;">Montant Total</th>
+        <th style="width: 12%;">Total Payé</th>
+        <th style="width: 12%;">Reste à Payer</th>
+        <!-- COLONNE ÉLARGIE À 14% POUR ACCUEILLIR LES DEUX BOUTONS EN LIGNE -->
+        <th style="width: 24%; text-align: center;" class="print-hide">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if investissements %}
+                {% for inv in investissements %}
+                <tr>
+                    <td>{{ inv.date_affichage }}</td>
+                    <td><strong>{{ inv.designation }}</strong></td>
+                    <td>{{ inv.categorie }}</td>
+                    <td>{{ inv.quantite }}</td>
+                    <td style="font-weight: bold;">{{ "{:,.2f}".format(inv.montant) }} F CFA</td>
+                    <td style="color: #27ae60;">{{ "{:,.2f}".format(inv.total_paye) }} F CFA</td>
+                    <td>
+                        {% if inv.reste_a_payer == 0 %}
+                            <span class="badge badge-solde">Soldé</span>
+                        {% else %}
+                            <span class="badge badge-credit">{{ "{:,.2f}".format(inv.reste_a_payer) }} F CFA</span>
+                        {% endif %}
+                    </td>
+                    <!-- CELLULE D'ACTIONS HARMONISÉE (AMORTISSEMENT + MODIFICATION) -->
+<td style="text-align: center;" class="print-hide">
+    <div style="display: flex; gap: 4px; justify-content: center; align-items: center; width: 100%;">
+        <!-- Bouton Amortissement existant -->
+        <button type="button" 
+                style="background-color: #2980b9; color: white; border: none; padding: 6px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; white-space: nowrap;"
+                onclick="ouvrirAmortissements('{{ inv.id_investissement }}', '{{ inv.designation }}')">
+            📊 Amort.
+        </button>
+        
+        <!-- Nouveau Bouton Modifier joint -->
+        <button type="button" 
+                style="background-color: #e74c3c; color: white; border: none; padding: 6px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; white-space: nowrap;"
+                onclick="chargerFormulaireModification('{{ inv.id_investissement }}', '{{ inv.designation }}', '{{ inv.categorie }}', '{{ inv.date_iso }}', '{{ inv.quantite }}', '{{ inv.montant }}', '{{ inv.duree_amortissement }}', '{{ inv.id_fournisseur }}')">
+            ✏️ Modif.
+        </button>
+        <!-- Nouveau bouton : Émission de règlement financier -->
+        <button type="button" 
+                style="background-color: #27ae60; color: white; border: none; padding: 6px 4px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; white-space: nowrap; box-sizing: border-box;"
+                onclick="ouvrirModalPaiement('{{ inv.id_investissement }}', '{{ inv.designation }}', '{{ inv.reste_a_payer }}')">
+            💳 Payer
+        </button>
+        <button type="button" 
+                style="background-color: #f39c12; color: white; border: none; padding: 6px 4px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; flex: 1; white-space: nowrap; box-sizing: border-box;"
+                onclick="ouvrirHistoriquePaiements('{{ inv.id_investissement }}', '{{ inv.designation }}')">
+            📜 Récus
+        </button>
+    </div> 
+    </div>
+</td>
+
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 30px; font-weight: bold;">
+                        ℹ Aucun registre d'investissement trouvé pour les critères sélectionnés.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <!-- BARRE DE PAGINATION CENTRÉE PERMANENTE -->
+    <div class="pagination-container print-hide">
+        <!-- Bouton Précédent -->
+        {% if pagination and pagination.has_prev %}
+            <a href="{{ url_for('liste_investissements', page=pagination.prev_num, categorie=categorie_active) }}" class="pagination-link">« Précédent</a>
+        {% else %}
+            <span class="pagination-disabled">« Précédent</span>
+        {% endif %}
+
+        <!-- Numéros de pages -->
+        {% if pagination and pagination.pages > 0 %}
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="pagination-active">{{ page_num }}</span>
+                    {% else %}
+                        <a href="{{ url_for('liste_investissements', page=page_num, categorie=categorie_active) }}" class="pagination-link">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                    <span style="color: #7f8c8d; padding: 0 5px;">...</span>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <span class="pagination-active">1</span>
+        {% endif %}
+
+        <!-- Bouton Suivant -->
+        {% if pagination and pagination.has_next %}
+            <a href="{{ url_for('liste_investissements', page=pagination.next_num, categorie=categorie_active) }}" class="pagination-link">Suivant »</a>
+        {% else %}
+            <span class="pagination-disabled">Suivant »</span>
+        {% endif %}
+    </div>
+</div> <!-- Fin du container principal -->
+
+<!-- FENÊTRE MODALE DE VISUALISATION DU PLAN D'AMORTISSEMENT -->
+<div id="modalAmortissement" class="print-hide" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 id="modalTitle" style="margin: 0; color: #1e2229; font-size: 16px;">Plan d'Amortissement</h3>
+            <span style="font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer;" onclick="fermerModal()">&times;</span>
+        </div>
+        <table style="width: 100%; margin-top: 0; font-size: 13px;">
+            <thead>
+                <tr style="background-color: #1e2229; color: white;">
+                    <th style="padding: 8px; text-align: center; width: 35%;">Année Exercice</th>
+                    <th style="padding: 8px; text-align: right; width: 65%;">Annuité d'Amortissement (F CFA)</th>
+                </tr>
+            </thead>
+            <tbody id="amortissementTableBody">
+                <!-- Les lignes du tableau seront injectées ici dynamiquement par Javascript -->
+            </tbody>
+        </table>
+        <div style="text-align: right; margin-top: 20px;">
+            <button type="button" onclick="fermerModal()" style="background-color: #7f8c8d; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Fermer</button>
+        </div>
+    </div>
+</div>
+<!-- FENÊTRE MODALE D'ENREGISTREMENT DE PAIEMENT (MASQUÉE À L'IMPRESSION) -->
+<div id="modalPaiement" class="print-hide" style="display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #27ae60; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 id="paiementModalTitle" style="margin: 0; color: #1e2229; font-size: 16px;">Saisie d'un versement financier</h3>
+            <span style="font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer;" onclick="fermerModalPaiement()">&times;</span>
+        </div>
+
+        <form action="/investissements/payer" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+            <!-- Inputs cachés techniques -->
+            <input type="hidden" id="id_investissement_paiement" name="id_investissement_paiement">
+
+            <div>
+                <label style="font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px;">Reste à recouvrer actuel (F CFA) :</label>
+                <input type="text" id="solde_restant_affiche" disabled style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background-color: #f8f9fa; font-weight: bold; color: #c0392b; width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px;">Montant à verser (F CFA) * :</label>
+                <input type="number" name="montant_paye" id="montant_paye_input" min="1" step="0.01" required placeholder="Ex: 500000" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px;">Date de l'opération * :</label>
+                <input type="date" name="date_paiement" id="date_paiement_input" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px;">Mode de règlement * :</label>
+                <select name="mode_paiement" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; background: white; height: 38px; box-sizing: border-box;">
+                    <option value="Chèque">Chèque Bancaire</option>
+                    <option value="Virement">Virement Électronique</option>
+                    <option value="Espèces">Espèces / Cash</option>
+                    <option value="Wave/OrangeMoney">Mobile Money (Wave/OM)</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px;">Numéro de pièce / Référence :</label>
+                <input type="text" name="reference" placeholder="Ex: CHQ-00234 ou VRM-98" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" onclick="fermerModalPaiement()" style="background-color: #7f8c8d; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;">Annuler</button>
+                <button type="submit" style="background-color: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;">Valider l'écriture</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- FENÊTRE MODALE HISTORIQUE COMPLET DES PAIEMENTS -->
+<div id="modalHistoriquePaiement" class="print-hide" style="display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div style="background-color: white; padding: 25px; border-radius: 8px; width: 95%; max-width: 650px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-height: 75vh; overflow-y: auto;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f39c12; padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 id="historiqueModalTitle" style="margin: 0; color: #1e2229; font-size: 16px;">Historique des encaissements</h3>
+            <span style="font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer;" onclick="fermerHistoriquePaiements()">&times;</span>
+        </div>
+
+        <table style="width: 100%; margin-top: 0; font-size: 12px; border: 1px solid #ddd;">
+            <thead>
+                <tr style="background-color: #f8f9fa; color: #1e2229; border-bottom: 2px solid #ddd;">
+                    <th style="padding: 10px; text-align: center; color:#333; background:#eee; width: 18%;">Date</th>
+                    <th style="padding: 10px; text-align: left; color:#333; background:#eee; width: 22%;">Mode</th>
+                    <th style="padding: 10px; text-align: left; color:#333; background:#eee; width: 20%;">Référence</th>
+                    <th style="padding: 10px; text-align: left; color:#333; background:#eee; width: 18%;">Auteur</th>
+                    <th style="padding: 10px; text-align: right; color:#333; background:#eee; width: 22%;">Montant</th>
+                </tr>
+            </thead>
+            <tbody id="historiquePaiementTableBody">
+                <!-- Injection dynamique asynchrone -->
+            </tbody>
+        </table>
+
+        <div style="text-align: right; margin-top: 25px;">
+            <button type="button" onclick="fermerHistoriquePaiements()" style="background-color: #7f8c8d; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer;">Fermer la pièce</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function ouvrirHistoriquePaiements(idInvestissement, designation) {
+        document.getElementById('historiqueModalTitle').innerHTML = "📜 Carnet de Versement : " + designation;
+        var tbody = document.getElementById('historiquePaiementTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #7f8c8d;">🔄 Extraction des écritures comptables...</td></tr>';
+        
+        document.getElementById('modalHistoriquePaiement').style.display = 'flex';
+
+        fetch('/investissements/' + idInvestissement + '/paiements')
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 25px; color: #7f8c8d; font-weight: bold;">ℹ Aucun versement n\'a encore été enregistré pour cette immobilisation.</td></tr>';
+                    return;
+                }
+                data.forEach(item => {
+                    var row = document.createElement('tr');
+                    var mntFormate = new Intl.NumberFormat('fr-FR').format(item.montant) + " F CFA";
+                    
+                    row.innerHTML = `
+                        <td style="text-align: center; padding: 10px; border-bottom: 1px solid #eee;">${item.date}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>${item.mode}</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #555;">${item.reference}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee; color: #7f8c8d;">${item.operateur}</td>
+                        <td style="text-align: right; padding: 10px; border-bottom: 1px solid #eee; color: #27ae60; font-weight: bold;">${mntFormate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Erreur technique:', error);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #c0392b; font-weight: bold;">❌ Échec lors de la communication avec le grand-livre.</td></tr>';
+            });
+    }
+
+    function fermerHistoriquePaiements() {
+        document.getElementById('modalHistoriquePaiement').style.display = 'none';
+    }
+
+    // Extension de la fermeture automatique en cas de clic hors-cadre
+    window.addEventListener('click', function(event) {
+        var modalHist = document.getElementById('modalHistoriquePaiement');
+        if (event.target == modalHist) {
+            modalHist.style.display = 'none';
+        }
+    });
+
+    function ouvrirModalPaiement(id, designation, resteAPayer) {
+        document.getElementById('id_investissement_paiement').value = id;
+        document.getElementById('paiementModalTitle').innerHTML = "💳 Régler l'achat : " + designation;
+        
+        // Formater proprement la valeur résiduelle pour l'affichage informatif
+        var formatFrancs = new Intl.NumberFormat('fr-FR').format(resteAPayer) + " F CFA";
+        document.getElementById('solde_restant_affiche').value = formatFrancs;
+        
+        // Assigner la limite max de sécurité au champ de saisie
+        var inputMnt = document.getElementById('montant_paye_input');
+        inputMnt.max = resteAPayer;
+        inputMnt.value = resteAPayer; // Pré-remplit par défaut avec le montant exact restant
+        
+        // Initialiser avec la date du jour
+        document.getElementById('date_paiement_input').value = new Date().toISOString().split('T')[0];
+        
+        document.getElementById('modalPaiement').style.display = 'flex';
+    }
+
+    function fermerModalPaiement() {
+        document.getElementById('modalPaiement').style.display = 'none';
+    }
+
+    // Initialisation de la date automatique
+    document.addEventListener('DOMContentLoaded', function() {
+        var dateInp = document.getElementById('form_date_acquisition');
+        if (dateInp && !dateInp.value) {
+            dateInp.value = new Date().toISOString().split('T')[0];
+        }
+    });
+
+    // Gestion asynchrone de la fenêtre modale des amortissements
+    function ouvrirAmortissements(idInvestissement, designation) {
+        document.getElementById('modalTitle').innerText = "📊 Plan d'Amortissement Linéaire : " + designation;
+        var tbody = document.getElementById('amortissementTableBody');
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 15px; color: #7f8c8d;">🔄 Chargement des données...</td></tr>';
+        
+        document.getElementById('modalAmortissement').style.display = 'flex';
+
+        fetch('/investissements/' + idInvestissement + '/amortissements')
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 15px;">Aucune donnée disponible.</td></tr>';
+                    return;
+                }
+                data.forEach(item => {
+                    var row = document.createElement('tr');
+                    var montantFormate = new Intl.NumberFormat('fr-FR').format(item.montant) + " F CFA";
+                    row.innerHTML = `
+                        <td style="text-align: center; font-weight: bold; padding: 10px; border-bottom: 1px solid #ddd;">${item.annee}</td>
+                        <td style="text-align: right; color: #c0392b; font-weight: bold; padding: 10px; border-bottom: 1px solid #ddd;">${montantFormate}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 15px; color: #c0392b;">❌ Erreur lors du chargement des annuités.</td></tr>';
+            });
+    }
+
+    function fermerModal() {
+        document.getElementById('modalAmortissement').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        var modal = document.getElementById('modalAmortissement');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+   function chargerFormulaireModification(id, designation, categorie, dateIso, quantite, montant, duree, idFournisseur) {
+    // 1. Changement visuel du titre du formulaire
+    var formTitle = document.querySelector('form h3');
+    if (formTitle) {
+        formTitle.innerHTML = "✏️ Rectifier / Modifier l'Investissement : <span style='color:#e67e22;'>" + designation + "</span>";
+    }
+    
+    // 2. Modification de l'action du formulaire pour cibler la route de mise à jour
+    var formEl = document.querySelector('form.print-hide');
+    if (formEl) {
+        formEl.action = "/investissements/modifier/" + id;
+    }
+    
+    // 3. Injection automatique des valeurs existantes dans les champs correspondants
+    document.querySelector("input[name='designation']").value = designation;
+    document.querySelector("select[name='categorie']").value = categorie;
+    document.querySelector("input[name='date_acquisition']").value = dateIso;
+    document.querySelector("select[name='id_fournisseur']").value = idFournisseur;
+    document.querySelector("input[name='quantite']").value = quantite;
+    document.querySelector("input[name='montant']").value = montant;
+    document.querySelector("input[name='duree_amortissement']").value = duree;
+    
+    // 4. Mutation du bouton de soumission
+    var submitBtn = formEl.querySelector("button[type='submit']");
+    if (submitBtn) {
+        submitBtn.innerHTML = "💾 Enregistrer les Modifications";
+        submitBtn.style.backgroundColor = "#27ae60"; // Changement de couleur en vert pour valider l'édition
+    }
+    
+    // 5. Scroll fluide vers le formulaire pour le confort visuel de l'opérateur
+    formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+ 
+</script>
+</body>
+</html>

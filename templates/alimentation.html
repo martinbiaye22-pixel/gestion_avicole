@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi de l'Alimentation - Gestion Avicole</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 20px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-block { border-bottom: 2px solid #f1c40f; padding-bottom: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        h2 { color: #1e2229; margin: 0; font-size: 22px; }
+        .btn-back { background-color: #7f8c8d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .btn-back:hover { background-color: #6c7a7d; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 6px; border: 1px solid #e6e6e6; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 6px; color: #2c3e50; font-size: 13px; }
+        input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        
+        /* BOUTON ENREGISTRER (JAUNE) */
+        .btn-submit { background-color: #f1c40f; color: #1e2229; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; grid-column: span 2; transition: background 0.2s; }
+        .btn-submit:hover { background-color: #f39c12; }
+        .btn-edit-mode { background-color: #3498db !important; color: white !important; }
+        .btn-cancel { display: none; background-color: #7f8c8d; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; text-decoration: none; margin-top: -5px; margin-bottom: 15px; }
+        
+        /* BOUTON MODIFIER DANS LE TABLEAU (JAUNE) */
+        .btn-action-edit { background-color: #f1c40f; color: #1e2229; border: 1px solid #d4ac0d; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; }
+        .btn-action-edit:hover { background-color: #f39c12; }
+        
+        .filter-print-zone { display: flex; justify-content: space-between; align-items: center; background: #eef2f5; padding: 15px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; flex-wrap: wrap; gap: 10px; }
+        .filter-box { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; flex-wrap: wrap; }
+        .btn-print { background-color: #1e2229; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        .btn-print:hover { background-color: #11151c; }
+        .stats-ferme-card { background: #ffffff; padding: 18px; border-radius: 6px; border-left: 5px solid #27ae60; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-top: 1px solid #eef2f5; border-right: 1px solid #eef2f5; border-bottom: 1px solid #eef2f5; }
+        .stats-ferme-card h3 { margin: 0 0 12px 0; font-size: 15px; color: #2c3e50; font-weight: bold; }
+        .stats-ferme-list { margin: 0; padding-left: 20px; font-weight: bold; color: #27ae60; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 4px 6px; text-align: left; border-bottom: 1px solid #ddd; line-height: 1.2; }
+
+        th { background-color: #1e2229; color: white; font-size: 14px; }
+        tr:hover { background-color: #f1f4f6; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-size: 14px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .print-header { display: none; margin-bottom: 30px; border-bottom: 3px double #333; padding-bottom: 15px; }
+
+        @media print {
+            body { background-color: white; padding: 0; margin: 0; color: #000 !important; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; width: 100%; }
+            .header-block, #alimentationForm, .filter-print-zone, .action-column, .print-hide { display: none !important; }
+            .print-header { display: flex !important; justify-content: space-between; align-items: center; }
+            .stats-ferme-card { box-shadow: none !important; border: 1px solid #333 !important; background: #fff !important; margin-bottom: 20px !important; }
+            table { display: table !important; width: 100% !important; border: 1px solid #333 !important; border-collapse: collapse !important; }
+            th { background-color: #444 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th, td { display: table-cell !important; padding: 10px !important; border: 1px solid #333 !important; font-size: 12px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+       <!-- En-tête pour impression PDF Corrigé -->
+<div class="print-header">
+    <div>
+        <!-- Forçage de votre raison sociale si la base de données renvoie vide -->
+        <h1 style="margin: 0; font-size: 22px; font-weight: bold; color: #1e2229;">
+            {{ entreprise.raison_sociale if entreprise and entreprise.raison_sociale else 'PROMAS' }}
+        </h1>
+        <p style="margin: 4px 0; font-size: 12px; color: #555;">
+            {{ entreprise.adresse if entreprise and entreprise.adresse else 'Ferme Georgette BIAYE' }}
+        </p>
+        <p style="margin: 2px 0; font-size: 12px; color: #555;">
+            Tél: {{ entreprise.telephone if entreprise and entreprise.telephone else '+221 77 345 69 34' }}
+        </p>
+    </div>
+    <div style="text-align: right;">
+        <h2 style="margin: 0; color: #333; font-size: 16px;">Registre des Consommations d'Aliments</h2>
+        <p style="margin: 5px 0 0 0; font-size: 12px; font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 4px;">
+            Période : {{ mois_actif }} / {{ annee_active }}
+        </p>
+    </div>
+</div>
+
+
+        <!-- En-tête standard Écran -->
+        <div class="header-block">
+            <h2 id="form-title">📝 Distribution Quotidienne d'Alimentation</h2>
+            <a href="{{ url_for('index') }}" class="btn-back">← Tableau de Bord</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+<!-- 📊 BLOC DE BILAN DE STOCK ET D'AUTONOMIE CALENDAIRE (ANTI-FRAUDE) -->
+<div style="background-color: #fff3e0; border: 1px solid #ffe0b2; padding: 18px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <div>
+        <strong style="font-size: 16px; color: #e65100;">🛡️ Suivi du Stock de Sécurité & Autonomie Calendaire</strong>
+        <div style="font-size: 12px; color: #ef6c00; margin-top: 3px;">
+            L'autonomie descendante est indexée sur le nombre de jours de distribution uniques du mois.
+        </div>
+        
+        <!-- Affichera strictement 29 jours restants, même si la quantité de la fiche est modifiée -->
+        <div style="margin-top: 8px; font-size: 13px; font-weight: bold; color: white; background: #2c3e50; padding: 4px 10px; border-radius: 4px; display: inline-block;">
+            ⏳ Autonomie estimée : <strong>{{ jours_autonomie }} jours de consommation restants</strong>
+        </div>
+    </div>
+    
+    <div style="text-align: right;">
+        <!-- Le stock restant quant à lui comptabilise parfaitement la modification (ex: 2480.0 Kg) -->
+        <span style="font-size: 24px; font-weight: bold; color: #d84315;">
+            {{ stock_restant_produit }} <span style="font-size: 14px; font-weight: normal; color: #666;">Kg</span>
+        </span>
+        <div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">Restant en stock ce mois-ci</div>
+    </div>
+</div>
+
+        <!-- Formulaire de saisie -->
+        <form action="{{ url_for('ajouter_alimentation') }}" method="POST" id="alimentationForm">
+            <input type="hidden" id="id_alimentation_modif" name="id_alimentation_modif" value="">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="id_lot">Sélectionner le Lot Avicole * :</label>
+                    <select id="id_lot" name="id_lot" required>
+                        <option value="" disabled selected>-- Choisir un lot --</option>
+                        {% for lot in lots %}
+                            <option value="{{ lot.id_lot }}">{{ lot.code_lot }} ({{ lot.souche }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Champ Type d'Aliment distribué - VERSION CORRIGÉE -->
+<div class="form-group">
+    <label for="id_produit">Type d'Aliment distribué * :</label>
+    <select id="id_produit" name="id_produit" required>
+        <option value="" disabled selected>-- Sélectionner la phase --</option>
+        {% for prod in produits %}
+            <option value="{{ prod.id_produit }}">{{ prod.designation }}</option>
+        {% endfor %}
+    </select>
+</div>
+                <div class="form-group">
+                    <label for="date_alimentation">Date de distribution * :</label>
+                    <input type="date" id="date_alimentation" name="date_alimentation" required>
+                </div>
+                <div class="form-group">
+                    <label for="quantite">Quantité distribuée (en Kg) * :</label>
+                    <input type="number" id="quantite" name="quantite" min="0.1" step="0.1" placeholder="Ex: 50" required>
+                </div>
+                <button type="submit" id="submitBtn" class="btn-submit">💾 Enregistrer la Consommation</button>
+                <button type="button" id="cancelBtn" class="btn-cancel" onclick="annulerModification()">❌ Annuler la modification</button>
+            </div>
+        </form>
+
+        <!-- ZONE DES FILTRES COHÉRENTS -->
+        <div class="filter-print-zone">
+            <div class="filter-box">
+                <label style="margin: 0; font-size: 14px;">Filtrer :</label>
+                <select id="filter_mois" style="padding: 6px 8px; font-size: 14px;" onchange="filtrerRegistre()">
+                    <option value="01" {% if mois_actif == '01' %}selected{% endif %}>Janvier</option>
+                    <option value="02" {% if mois_actif == '02' %}selected{% endif %}>Février</option>
+                    <option value="03" {% if mois_actif == '03' %}selected{% endif %}>Mars</option>
+                    <option value="04" {% if mois_actif == '04' %}selected{% endif %}>Avril</option>
+                    <option value="05" {% if mois_actif == '05' %}selected{% endif %}>Mai</option>
+                    <option value="06" {% if mois_actif == '06' %}selected{% endif %}>Juin</option>
+                    <option value="07" {% if mois_actif == '07' %}selected{% endif %}>Juillet</option>
+                    <option value="08" {% if mois_actif == '08' %}selected{% endif %}>Août</option>
+                    <option value="09" {% if mois_actif == '09' %}selected{% endif %}>Septembre</option>
+                    <option value="10" {% if mois_actif == '10' %}selected{% endif %}>Octobre</option>
+                    <option value="11" {% if mois_actif == '11' %}selected{% endif %}>Novembre</option>
+                    <option value="12" {% if mois_actif == '12' %}selected{% endif %}>Décembre</option>
+                </select>
+                
+                <!-- Filtre Année -->
+                <select id="filter_annee" style="padding: 6px 8px; font-size: 14px;" onchange="filtrerRegistre()">
+                    {% for annee in annees %}
+                        <option value="{{ annee }}" {% if annee_active == annee %}selected{% endif %}>{{ annee }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- LE FILTRE PAR LOT OBLIGATOIRE (À VÉRIFIER DANS VOTRE FICHIER) -->
+                <select id="filter_lot" style="padding: 6px 8px; font-size: 14px;" onchange="filtrerRegistre()">
+                    <option value="">Tous les Lots</option>
+                    {% for lot in lots %}
+                    <option value="{{ lot.id_lot }}" {% if lot_actif and lot_actif|string == lot.id_lot|string %}selected{% endif %}>{{ lot.code_lot }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+         <!-- 🔒 MASQUAGE STRICT DU BOUTON D'IMPRESSION POUR LES OUVRIERS -->
+            {% if est_admin %}
+            <button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimer la liste sélectionnée</button>
+             {% endif %}
+        </div>
+
+        <div class="stats-ferme-card">
+            <h3>📊 Consommation Globale des Aliments par Ferme :</h3>
+            <ul class="stats-ferme-list">
+                {% for ferme, total in conso_fermes.items() %}
+                    <li>Ferme : <span style="color: #333;">{{ ferme }}</span> — Quantité Consommée : <span style="color: #d35400;">{{ total }} Kg</span></li>
+                {% else %}
+                    <li style="color: #7f8c8d; font-weight: normal; list-style-type: none; padding-left: 0;">⚠️ Aucun enregistrement nutritionnel comptabilisé pour cette période.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <h2 class="print-hide" style="margin-top: 30px; color: #1e2229; font-size: 18px; border-bottom: 2px solid #ccc; padding-bottom: 8px;">
+            📋 Registre Mensuel des Consommations d'Aliments
+        </h2>
+    
+   <table>
+<thead>
+<tr>
+    <th>Date de distribution</th>
+    <th>Code Lot (Poules Vivantes)</th>
+    <th>Ferme</th>
+    <th>Aliment Distribué</th>
+    <th>Quantité Consommée</th>
+    <th>Opérateur</th>
+    <th class="action-column">Action</th>
+</tr>
+</thead>
+<tbody>
+{% if alimentations %}
+{% for a in alimentations %}
+<tr>
+    <!-- 1. Date -->
+    <td id="date-{{ a.id_alimentation }}" data-dateiso="{{ a.date_alimentation }}">{{ a.date_alimentation }}</td>
+    
+    <!-- 2. Code Lot -->
+    <td data-idlot="{{ a.id_lot }}" id="lot-{{ a.id_alimentation }}">
+        <strong>{{ a.lot_avicole.code_lot }}</strong>
+        <br><small style="color: #7f8c8d; font-weight: 500;">({{ a.poules_vivantes_lot }} vivantes)</small>
+    </td>
+    
+    <!-- 3. Ferme -->
+    <td><span style="font-weight: 600; color: #2c3e50;">{{ a.nom_ferme_lot }}</span></td>
+    
+    <!-- 4. Aliment -->
+    <td id="produit-{{ a.id_alimentation }}" data-idproduit="{{ a.id_produit }}">
+        {{ a.produit.designation if a.produit else 'Produit fini (Prix moyen)' }}
+    </td>
+    
+    <!-- 5. Quantité -->
+    <td id="qte-{{ a.id_alimentation }}"><span style="font-weight: bold; color: #27ae60;">{{ a.quantite }} Kg</span></td>
+    
+   <!-- ❌ 6. Colonne Opérateur intelligente (Correction définitive avec .operateur) -->
+<td>
+    {% if est_admin or a.id_user == session['user_id'] %}
+        <span style="color: #2c3e50; font-weight: bold; font-size: 13px;">
+            @{{ a.operateur.NomUtilisateur if a.operateur else 'Système' }}
+        </span>
+    {% else %}
+        <span style="color: #7f8c8d; font-style: italic; font-size: 13px;">
+            Masqué
+        </span>
+    {% endif %}
+</td>
+
+    <!-- 7. Action -->
+    <td class="action-column">
+        <button type="button" class="btn-action-edit" onclick="chargerDonnees('{{ a.id_alimentation }}')">✏ Modifier</button>
+    </td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="7" style="text-align: center; color: #7f8c8d; padding: 25px; font-weight: bold;">
+        ℹ Aucun enregistrement trouvé pour cette période.
+    </td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+<!-- BLOC DE NAVIGATION DE LA PAGINATION -->
+{% if pagination and pagination.pages > 1 %}
+<div class="print-hide" style="display: flex; justify-content: center; gap: 10px; margin-top: 25px; align-items: center;">
+    
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('liste_alimentations', page=pagination.prev_num, mois=mois_actif, annee=annee_active, lot=lot_actif) }}" 
+           style="padding: 8px 14px; background: #1e2229; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #1e2229;">« Précédent</a>
+    {% endif %}
+
+    <span style="font-size: 14px; font-weight: bold; color: #2c3e50; background: #eef2f5; padding: 6px 12px; border-radius: 4px; border: 1px solid #cfd9db;">
+        Page {{ pagination.page }} sur {{ pagination.pages }}
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('liste_alimentations', page=pagination.next_num, mois=mois_actif, annee=annee_active, lot=lot_actif) }}" 
+           style="padding: 8px 14px; background: #1e2229; color: white; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #1e2229;">Suivant »</a>
+    {% endif %}
+    
+</div>
+{% endif %}
+<!-- ==============================================================================
+     📜 SCRIPTING DYNAMIQUE : FILTRAGE & ÉDITION EN LIGNE
+     ============================================================================== -->
+    <script>
+        // FONCTION DE FORÇAGE POUR LES SÉLECTEURS DE FILTRE
+        document.addEventListener("DOMContentLoaded", function() {
+            // Extraction des paramètres directement depuis l'URL de la page
+            const urlParams = new URLSearchParams(window.location.search);
+            const lotParam = urlParams.get('lot');
+            
+            // Si le paramètre 'lot' existe dans l'URL, on force sa sélection visuelle
+            if (lotParam) {
+                const selectLot = document.getElementById('filter_lot');
+                if (selectLot) {
+                    selectLot.value = lotParam;
+                }
+            }
+        });
+
+        function filtrerRegistre() {
+            var mois = document.getElementById('filter_mois').value;
+            var annee = document.getElementById('filter_annee').value;
+            var lot = document.getElementById('filter_lot').value;
+            window.location.href = "{{ url_for('liste_alimentations') }}?mois=" + mois + "&annee=" + annee + "&lot=" + lot;
+        }
+
+  function chargerDonnees(id) {
+    // 1. Bascule visuelle du titre et du bouton de validation
+    document.getElementById('form-title').innerText = "✏ Correction d'une Fiche Alimentation";
+    document.getElementById('submitBtn').innerText = " Mettre à jour la Consommation";
+    document.getElementById('submitBtn').classList.add('btn-edit-mode');
+    document.getElementById('cancelBtn').style.display = "inline-block";
+    
+    // 2. Extraction des attributs techniques stockés dans la ligne du tableau
+    var lotId = document.getElementById('lot-' + id).getAttribute('data-idlot');
+    var dateIso = document.getElementById('date-' + id).getAttribute('data-dateiso');
+    var qteVal = document.getElementById('qte-' + id).innerText.replace(" Kg", "").trim();
+    
+    // Récupération sécurisée de l'ID produit masqué
+    var typeAlimentId = document.getElementById('produit-' + id).getAttribute('data-idproduit') || "3";
+    
+    // 3. Injection des valeurs dans les champs du formulaire pour édition
+    document.getElementById('id_alimentation_modif').value = id;
+    document.getElementById('id_lot').value = lotId;
+    document.getElementById('id_produit').value = typeAlimentId; 
+    document.getElementById('date_alimentation').value = dateIso;
+    document.getElementById('quantite').value = parseFloat(qteVal);
+    
+    // ⚠️ CRUCIAL : Aucune manipulation de l'élément HTML d'autonomie ici !
+    // On laisse le badge afficher strictement la valeur calculée par le serveur Flask.
+
+    // 4. Remontée fluide vers le formulaire de saisie
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+        function annulerModification() {
+            document.getElementById('alimentationForm').reset();
+            document.getElementById('id_alimentation_modif').value = "";
+            document.getElementById('form-title').innerText = "📝 Distribution Quotidienne d'Alimentation";
+            document.getElementById('submitBtn').innerText = "💾 Enregistrer la Consommation";
+            document.getElementById('submitBtn').classList.remove('btn-edit-mode');
+            document.getElementById('cancelBtn').style.display = "none";
+        }
+
+// Sécurité anti-dépassement de stock à ajouter dans votre écouteur de formulaire
+document.querySelector('form').addEventListener('submit', function(event) {
+    var quantiteSaisie = parseFloat(document.getElementById('quantite').value) || 0;
+    var stockDisponible = parseFloat("{{ stock_restant_produit }}") || 0;
+    var idModif = document.getElementById('id_alimentation_modif').value;
+
+    // On ne bloque que s'il s'agit d'un nouvel ajout (pas d'une modification de fiche)
+    if (!idModif && quantiteSaisie > stockDisponible) {
+        alert("🚨 Alerte Stock Insuffisant !\nVous tentez de distribuer " + quantiteSaisie + " Kg, mais il ne reste que " + stockDisponible + " Kg en magasin.");
+        event.preventDefault(); // Annule l'envoi du formulaire
+    }
+});
+
+    </script>
+</body>
+</html>
