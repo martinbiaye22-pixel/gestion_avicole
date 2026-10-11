@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Console Fondateur - Droits d'Accès</title>
+<style>
+/* STYLES DE BASE STRUCTURAUX (COMMUNS PC ET MOBILE) */
+* { box-sizing: border-box; }
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background-color: #f4f6f9; 
+    color: #333; 
+    margin: 0; 
+    padding: 20px; 
+}
+.flex-dashboard-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+}
+.container-main { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+    flex: 3;
+    min-width: 0;
+}
+.audit-sidebar {
+    background-color: #1e2229;
+    color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 280px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.header-block { 
+    border-bottom: 2px solid #e74c3c; 
+    padding-bottom: 12px; 
+    margin-bottom: 25px; 
+}
+.header-block h2 { color: #1e2229; margin: 0; font-size: 22px; font-weight: bold; }
+.btn-back { 
+    color: #2e86c1; 
+    text-decoration: none; 
+    font-size: 14px; 
+    font-weight: bold; 
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+/* Configuration des entrées et éléments du tableau */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    background: white; 
+    font-size: 13px; 
+    table-layout: auto !important; 
+}
+th, td { 
+    padding: 10px 12px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+    vertical-align: middle; 
+    white-space: nowrap !important; 
+}
+th { background-color: #1e2229; color: white; font-weight: bold; }
+tr:hover { background-color: #f1f4f6; }
+
+.badge-autorise { background-color: #2ecc71; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+.btn-action-block { background-color: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+.btn-write { background-color: #2c3e50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+input[type="password"], input[type="text"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; height: 32px; box-sizing: border-box; }
+
+/* Bloc de traçabilité d'audit */
+.audit-card {
+    background: #11151c;
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid #3498db;
+    margin-top: 15px;
+}
+.alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+.alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+/* ========================================================
+   2. INFRASTRUCTURE ÉTANCHE ORDINATEURS (> 768px)
+   ======================================================== */
+@media screen and (min-width: 769px) {
+    .flex-dashboard-row { flex-direction: row !important; }
+}
+
+/* ========================================================
+   3. CONFIGURATION RESPONSIVE ÉTANCHE POUR MOBILE (<= 768px)
+   ======================================================== */
+@media screen and (max-width: 768px) {
+    body { padding: 10px !important; }
+    
+    /* Force l'empilement vertical du tableau de contrôle et de la traçabilité */
+    .flex-dashboard-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 20px !important;
+    }
+    
+    /* Élastification des blocs principaux */
+    .container-main, .audit-sidebar { 
+        padding: 15px !important; 
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Traitement fluide des titres longs */
+    .header-block h2, h3 {
+        font-size: 16px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+    }
+
+    /* ACTIVATION DE LA BARRE DE DÉFILEMENT HORIZONTALE DE SÉCURITÉ */
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important; /* Déclenche le glissement latéral au doigt */
+        display: block !important;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 15px;
+        -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100% !important; table-layout: auto !important; }
+    th, td { padding: 10px 12px !important; font-size: 12.5px !important; }
+
+    /* Ajustement des micro-formulaires de mot de passe intégrés dans les lignes */
+    td form[style*="display: flex"] {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: auto !important;
+    }
+    td input[type="password"] {
+        width: 130px !important; /* Maintient une largeur calibrée compacte en cellule */
+        height: 36px !important;
+    }
+    td .btn-write, td .btn-action-block {
+        height: 36px !important;
+        display: inline-flex !important;
+        justify-content: center;
+        align-items: center;
+    }
+}
+</style>
+body>
+<div class="flex-dashboard-row">
+    
+    <!-- CONSOLE PRINCIPALE DE RÉGULATION -->
+    <div class="container-main">
+        <div class="header-block">
+            <h2>🔒 Console Fondateur : Régulation des Accès &amp; Identifiants</h2>
+        </div>
+        
+        <a href="/" class="btn-back">← Retour au Tableau de Bord Principal</a>
+
+        <!-- Zone de notifications Flask -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert success">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- ENVELOPPE DE PROTECTION RESPONSIVE DU TABLEAU DES ACCÈS -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Fonction / Rôle</th>
+                        <th>Téléphone</th>
+                        <th>État de l'Accès</th>
+                        <th>Forcer Mot de Passe</th>
+                        <th>Restriction Active</th>
+                    </tr>
+                </thead>
+            <!-- CORPS DE TABLEAU 100% CONFORME AUX PROPRIÉTÉS PYTHON ET ROUTES DE APP.PY -->
+            <tbody>
+                {% if utilisateurs %}
+                    {% for user in utilisateurs %}
+                    <tr>
+                        <td><strong>@{{ user.NomUtilisateur }}</strong></td>
+                        <td><span style="text-transform: uppercase; font-size: 12px; font-weight: 600; color:#34495e;">{{ user.Fonction }}</span></td>
+                        <td>{{ user.Telephone or 'Non spécifié' }}</td>
+                        <td>
+                            {% if user.EstActif %}
+                                <span class="badge badge-active">✔ AUTORISÉ</span>
+                            {% else %}
+                                <span class="badge badge-blocked">❌ BLOQUÉ</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="/superadmin/modifier_passe/{{ user.NumUser }}" method="POST" style="display: flex; gap: 5px; margin: 0;">
+                                <input type="text" class="input-text" name="NouveauMotPasse" placeholder="Nouveau passe" required>
+                                <button type="submit" class="btn btn-pass">Écrire</button>
+                            </form>
+                        </td>
+                        <td style="text-align: center;">
+                            {% if user.EstActif %}
+                                <a href="/superadmin/basculer_acces/{{ user.NumUser }}" class="btn btn-block" onclick="return confirm('Voulez-vous suspendre ce compte utilisateur ?')">Bloquer le compte</a>
+                            {% else %}
+                                <a href="/superadmin/basculer_acces/{{ user.NumUser }}" class="btn btn-unblock">Rétablir l'accès</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #7f8c8d; font-style: italic; padding: 30px;">Aucun autre utilisateur enregistré.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PANNEAU DROIT : JOURNAL HISTORIQUE DE TRAÇABILITÉ -->
+    <div class="side-panel">
+        <h3>📋 Journal d'Audit &amp; Traçabilité</h3>
+        <p style="font-size: 11px; color: #8aa4af; margin: 0 0 15px 0;">Mémorisation inaltérable des actions de sécurité exécutées sur l'ERP PROMAS.</p>
+        
+        <div class="timeline-container">
+            {% if journaux %}
+                {% for item in journaux %}
+                    <!-- Affectation de classe dynamique selon le début de l'action -->
+                    <div class="log-item {{ item.action_menee.split(' ')[0] }}">
+                        <span class="log-date">🕒 {{ item.date_action.strftime('%d/%m/%Y à %H:%M:%S') }}</span>
+                        <span class="log-action">{{ item.action_menee }}</span>
+                        <p style="margin: 3px 0 0 0; color: #b8c7ce; line-height: 1.3;">{{ item.details }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; font-size: 12px; color: #7f8c8d; font-style: italic; padding-top: 20px;">Aucun événement consigné pour le moment.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
