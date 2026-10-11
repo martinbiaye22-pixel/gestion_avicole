@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guichet d'Encaissement &amp; Suivi Paiements - PROMAS</title>
+<style>
+/* STYLES DE BASE STRUCTURAUX (COMMUNS PC ET MOBILE) */
+* { box-sizing: border-box; }
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background-color: #f4f6f9; 
+    color: #333; 
+    margin: 0; 
+    padding: 20px; 
+}
+.container { 
+    max-width: 1200px; 
+    margin: 20px auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+}
+.header-block { 
+    border-bottom: 2px solid #2ecc71; 
+    padding-bottom: 12px; 
+    margin-bottom: 25px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+h2, h3 { color: #1e2229; margin: 0; font-size: 22px; }
+.btn-back { 
+    background-color: #7f8c8d; 
+    color: white; 
+    padding: 8px 15px; 
+    text-decoration: none; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    font-weight: bold; 
+}
+.btn-back:hover { background-color: #6c7a7d; }
+
+/* Grille Formulaire Ordinateur par défaut */
+.form-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; 
+    background: #f8f9fa; 
+    padding: 20px; 
+    border-radius: 6px; 
+    border: 1px solid #e6e6e6; 
+    margin-bottom: 30px; 
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+label { font-weight: bold; font-size: 13px; color: #2c3e50; }
+input, select { 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    box-sizing: border-box; 
+    background: white; 
+    width: 100%;
+}
+.btn-submit { 
+    background-color: #2ecc71; 
+    color: white; 
+    padding: 12px; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 15px; 
+    font-weight: bold; 
+    grid-column: span 3; 
+    transition: background 0.2s; 
+}
+.btn-submit:hover { background-color: #27ae60; }
+
+/* Spécifications Tableaux PC par défaut */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    background: white; 
+    font-size: 13px; 
+    table-layout: auto !important; 
+}
+th, td { 
+    padding: 8px 12px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+    vertical-align: middle; 
+    white-space: nowrap !important; 
+}
+th { background-color: #1e2229; color: white; font-weight: bold; }
+tr:hover { background-color: #f1f4f6; }
+
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+.alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+.alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* DESIGN DE LA PAGINATION NATIVE ORDINATEUR */
+.pagination-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 25px 0 10px 0;
+    padding-top: 15px;
+    border-top: 1px solid #e6ebeb;
+}
+.pagination-btn {
+    background-color: white;
+    color: #2c3e50;
+    padding: 7px 14px;
+    text-decoration: none;
+    border: 1px solid #cfd9db;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+.pagination-btn:hover:not(.disabled) { background-color: #f1f4f6; }
+.pagination-btn.disabled { background-color: #f8f9fa; color: #bdc3c7; cursor: not-allowed; border-color: #ebebeb; }
+
+/* ========================================================
+   2. INFRASTRUCTURE ÉTANCHE ORDINATEURS (> 768px)
+   ======================================================== */
+@media screen and (min-width: 769px) {
+    .form-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    th:nth-child(1), td:nth-child(1) { width: 12%; }
+    th:nth-child(2), td:nth-child(2) { width: 14%; }
+    th:nth-child(3), td:nth-child(3) { width: 22%; }
+    th:nth-child(4), td:nth-child(4) { width: 16%; }
+    th:nth-child(5), td:nth-child(5) { width: 14%; }
+    th:nth-child(6), td:nth-child(6) { width: 12%; }
+    th:nth-child(7), td:nth-child(7) { width: 10%; }
+}
+
+/* ========================================================
+   3. CONFIGURATION RESPONSIVE ÉTANCHE POUR MOBILE (<= 768px)
+   ======================================================== */
+@media screen and (max-width: 768px) {
+    body { padding: 10px !important; }
+    
+    /* Sécurisation élastique globale */
+    .container { 
+        padding: 15px !important; 
+        margin: 5px auto !important; 
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    
+    /* Bloc en-tête horizontal aligné verticalement */
+    .header-block {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+    .header-block div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .btn-back, .header-block a {
+        width: 100% !important;
+        text-align: center !important;
+        display: block !important;
+        margin: 0 !important;
+    }
+
+    /* Traitement fluide des titres longs */
+    h2, h3, #form-title, .container h2, .container h3 {
+        font-size: 16px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Force le formulaire en grille sur 1 seule colonne propre */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 15px !important;
+        width: 100% !important;
+    }
+    .form-group, .form-group[style*="grid-column"] {
+        grid-column: span 1 !important;
+        width: 100% !important;
+    }
+    input, select, .btn-submit, button {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        height: auto !important;
+        min-height: 44px !important; /* Réglage élastique pour empêcher le chevauchement du texte */
+    }
+
+    /* Restructuration du bandeau de recettes réelles */
+    div[style*="background-color: #e8f8f5"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: center !important;
+        padding: 15px !important;
+        width: 100% !important;
+    }
+
+    /* Zone de filtrage comptable serveur mobile */
+    .filter-print-zone {
+        padding: 15px !important;
+        width: 100% !important;
+    }
+    .filter-print-zone form {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    .filter-print-zone select, .filter-print-zone button {
+        width: 100% !important;
+        margin: 0 !important;
+        height: 42px !important;
+    }
+
+    /* ACTIVATION DE LA BARRE DE DÉFILEMENT HORIZONTALE SÉCURISÉE */
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        display: block !important;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 15px;
+        -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100% !important; table-layout: auto !important; }
+    th, td { padding: 8px 10px !important; font-size: 12px !important; }
+
+    /* Zone de pagination élastique côte à côte (Numéros masqués) */
+    .pagination-block {
+        display: flex !important;
+        flex-direction: row !important; /* Force l'alignement horizontal unique */
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 25px 0 10px 0 !important;
+        box-sizing: border-box !important;
+    }
+    .pagination-block span:not([class*="btn"]) {
+        display: none !important; /* Efface le texte central pour sécuriser la ligne mobile */
+    }
+    .pagination-btn {
+        flex: 1 !important; /* Partage l'écran équitablement (50% / 50%) */
+        text-align: center !important;
+        padding: 12px 6px !important;
+        font-size: 13px !important;
+        font-weight: bold !important;
+        background-color: #2c3e50 !important; /* Style bouton validé bleu sombre */
+        color: white !important;
+        border: 1px solid #2c3e50 !important;
+        border-radius: 6px !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        box-sizing: border-box !important;
+    }
+    .pagination-btn.disabled {
+        background-color: #e9ecef !important;
+        color: #adb5bd !important;
+        border: 1px solid #dee2e6 !important;
+        cursor: not-allowed !important;
+    }
+        /* 🚨 SÉCURISATION RADICALE DES CHAMPS ET DU BOUTON VERT D'ENCAISSEMENT */
+    .container form, 
+    .container .form-grid {
+        grid-template-columns: 1fr !important; /* Force le passage strict sur 1 seule colonne */
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 12px !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .container .form-group, 
+    .container .form-group[style*="grid-column"] {
+        grid-column: span 1 !important; /* Annule le span 2 ou 4 du mode PC */
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Force le bouton vert à rester sagement dans le cadre blanc sans déborder */
+    .container .btn-submit,
+    .container form button[type="submit"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 46px !important; /* Hauteur tactile confortable */
+        padding: 10px !important;
+        white-space: normal !important; /* Autorise le texte à passer sur deux lignes */
+        line-height: 1.3 !important;
+        text-align: center !important;
+        display: block !important;
+        box-sizing: border-box !important;
+        margin: 5px 0 0 0 !important;
+    }
+    /* 1. EMPILEMENT VERTICAL ABSOLU ET DECOUPLAGE DE LA ZONE DE FILTRAGE */
+    div[style*="background: #eef2f5"],
+    div[style*="background:#eef2f5"],
+    .container div.filter-print-zone {
+        display: flex !important;
+        flex-direction: column !important; /* Force le passage strict sur 1 seule colonne */
+        align-items: stretch !important;   /* Étire tous les éléments à 100% de la largeur */
+        gap: 15px !important;              /* Espace aéré de sécurité entre les lignes */
+        padding: 15px !important;
+        height: auto !important;           /* Élimine toute hauteur fixe bloquante */
+        box-sizing: border-box !important;
+    }
+
+    /* 2. RESTRUCTURATION COMPLETE DES MENUS DEROULANTS ET DU FORMULAIRE */
+    div[style*="background: #eef2f5"] form,
+    div[style*="background:#eef2f5"] form,
+    .container div.filter-print-zone form {
+        display: flex !important;
+        flex-direction: column !important; /* Force l'empilement vertical du label et des sélecteurs */
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* Force chaque select (Mois, Année, Client) à s'étirer sur toute la largeur */
+    div[style*="background: #eef2f5"] select,
+    div[style*="background:#eef2f5"] select,
+    .filter-print-zone select {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 40px !important;           /* Hauteur confortable pour la sélection tactile */
+        display: block !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    /* 3. CADRAGE ET RÉALIGNEMENT EN BAS DU BOUTON NOIR D'IMPRESSION */
+    div[style*="background: #eef2f5"] button,
+    div[style*="background:#eef2f5"] button,
+    .filter-print-zone button.btn-back,
+    .filter-print-zone button {
+        width: 100% !important;            /* Occupe toute la largeur en bas de la zone */
+        max-width: 100% !important;
+        height: auto !important;           /* Supprime le verrouillage de hauteur PC */
+        min-height: 44px !important;       /* Épaisseur tactile optimale pour le doigt */
+        padding: 10px 15px !important;
+        background-color: #1e2229 !important; /* Maintient le fond noir pro */
+        color: #ffffff !important;         /* Force l'écriture du texte en BLANC */
+        font-size: 13px !important;
+        font-weight: bold !important;
+        white-space: normal !important;    /* Autorise le texte à respirer sans être tronqué */
+        line-height: 1.3 !important;
+        display: inline-flex !important;   /* Centre l'icône imprimante et le texte */
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 5px 0 0 0 !important;      /* Supprime les décalages externes parasites */
+        box-sizing: border-box !important;
+    }
+
+}
+
+/* --- STYLES SÉCURISÉS DÉDIÉS À L'IMPRESSION PAPIER --- */
+@media print {
+    .print-hide, form, .filter-print-zone, .header-block, .pagination-block { display: none !important; }
+    .print-only-header { display: block !important; border-bottom: 2px solid #000 !important; padding-bottom: 10px !important; margin-bottom: 20px !important; }
+    table { width: 100% !important; table-layout: auto !important; border: 1px solid #333 !important; border-collapse: collapse !important; }
+    th { background-color: #1e2229 !important; color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    th, td { border: 1px solid #333 !important; padding: 6px 10px !important; font-size: 12px !important; color: #000 !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+    <!-- En-tête d'impression (Masqué à l'écran, actif sur papier) -->
+    <div class="print-only-header" style="display: none;">
+        <div style="float: left;">
+            <h1 style="margin: 0; font-size: 20px; font-weight: bold;">PROMAS</h1>
+            <p style="margin: 4px 0; font-size: 12px;">Parcelles Assainies, Dakar</p>
+        </div>
+        <div style="float: right; text-align: right;">
+            <h2 style="margin: 0; font-size: 16px; font-weight: bold;">Registre Historique des Encaissements</h2>
+            <p style="margin: 4px 0; font-size: 11px;">Mois: {{ mois_sel }} / Année: {{ annee_sel }}</p>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <!-- Barre supérieure écran -->
+    <div class="header-block print-hide">
+        <h2>Guichet de Caisse &amp; Saisie des Règlements</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{{ url_for('suivi_ventes') }}" style="background-color: #2e86c1; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: bold;">Ventes</a>
+            <a href="{{ url_for('liste_factures') }}" class="btn-nav btn-facture" style="padding: 8px 15px; font-size: 14px; background-color: #f39c12; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">Factures</a>
+            <a href="/" class="btn-back">← Tableau de Bord</a>
+        </div>
+    </div>
+
+    <!-- Notifications Système -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <!-- 🚨 RECTIFICATION : AJOUT DE FORM-GRID POUR ACTIVER L'EMPILEMENT MOBILE -->
+<form action="{{ url_for('gestion_paiements_page') }}" method="POST" class="form-grid print-hide">
+
+        <div class="form-grid">
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="id_facture">Sélectionner la Facture à encaisser * :</label>
+                <select id="id_facture" name="id_facture" required>
+                    <option value="" disabled selected>-- Choisir une facture en attente --</option>
+                    {% for f in factures_disponibles %}
+                        <option value="{{ f.id_facture }}">{{ f.libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="montant">Montant du versement (FCFA) * :</label>
+                <input type="number" id="montant" name="montant" min="1" placeholder="Ex: 50000" required>
+            </div>
+            <div class="form-group">
+                <label for="mode_paiement">Mode de règlement * :</label>
+                <select id="mode_paiement" name="mode_paiement" required>
+                    <option value="Espèces" selected>Espèces (Caisse locale)</option>
+                    <option value="Wave">Mobile Money (Wave)</option>
+                    <option value="Orange Money">Mobile Money (Orange Money)</option>
+                    <option value="Chèque">Chèque Bancaire</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 1;">
+                <label for="date_paiement">Date de réception des fonds * :</label>
+                <input type="date" id="date_paiement" name="date_paiement" required>
+            </div>
+            <button type="submit" class="btn-submit">✔ Confirmer l'Encaissement &amp; Mettre à jour le Statut</button>
+        </div>
+    </form>
+
+    <!-- Bandeau de Recettes Unique (Hybride Écran/Papier) -->
+    <div style="background-color: #e8f8f5; border: 1px solid #a2d9ce; padding: 12px 20px; border-radius: 6px; margin-bottom: 25px; text-align: right; font-weight: bold; color: #16a085; font-size: 16px;">
+        Total des recettes réelles de la période : <span>{{ total_ca_encaisse|int }}</span> FCFA
+    </div>
+
+    <!-- ZONE DES FILTRES COMPTABLES SERVEUR -->
+    <div class="filter-print-zone print-hide" style="background: #eef2f5; padding: 12px 20px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #cfd9db; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+        <form method="GET" action="{{ url_for('gestion_paiements_page') }}" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin: 0; width: 100%;">
+            <label style="font-weight: bold; font-size: 13px; margin: 0;">Filtrer le registre :</label>
+            <select name="filter_mois" onchange="this.form.submit()">
+                <option value="">-- Tous les mois --</option>
+                <option value="01" {% if mois_sel == '01' %}selected{% endif %}>Janvier</option>
+                <option value="02" {% if mois_sel == '02' %}selected{% endif %}>Février</option>
+                <option value="03" {% if mois_sel == '03' %}selected{% endif %}>Mars</option>
+                <option value="04" {% if mois_sel == '04' %}selected{% endif %}>Avril</option>
+                <option value="05" {% if mois_sel == '05' %}selected{% endif %}>Mai</option>
+                <option value="06" {% if mois_sel == '06' %}selected{% endif %}>Juin</option>
+                <option value="07" {% if mois_sel == '07' %}selected{% endif %}>Juillet</option>
+                <option value="08" {% if mois_sel == '08' %}selected{% endif %}>Août</option>
+                <option value="09" {% if mois_sel == '09' %}selected{% endif %}>Septembre</option>
+                <option value="10" {% if mois_sel == '10' %}selected{% endif %}>Octobre</option>
+                <option value="11" {% if mois_sel == '11' %}selected{% endif %}>Novembre</option>
+                <option value="12" {% if mois_sel == '12' %}selected{% endif %}>Décembre</option>
+            </select>
+            <select name="filter_annee" onchange="this.form.submit()">
+                <option value="">-- Toutes les années --</option>
+                {% for annee in liste_annees %}
+                    <option value="{{ annee }}" {% if annee_sel == annee|string %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+            </select>
+            <select name="filter_client" onchange="this.form.submit()">
+                <option value="">-- Tous les clients --</option>
+                {% for c_nom in liste_clients %}
+                    <option value="{{ c_nom }}" {% if client_sel == c_nom %}selected{% endif %}>{{ c_nom }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <button type="button" class="btn-back" style="background-color: #1e2229; border: none; cursor: pointer; height: 35px; display: flex; align-items: center;" onclick="window.print()">🖨️ Imprimer le registre</button>
+    </div>
+
+    <!-- TABLEAU COMPTABLE CENTRAL ENVELOPPÉ DANS UNE STRUCTURE SÉCURISÉE -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>N° Facture</th>
+                    <th>Nom du Client</th>
+                    <th>Mode Règlement</th>
+                    <th style="text-align: right;">Montant Encaissé</th>
+                    <th>Opérateur</th>
+                    <th class="print-hide" style="text-align: center;">Actions Format</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if paiements %}
+                    {% for p in paiements %}
+                        <tr class="ligne-paiement">
+                            <td><strong>{{ p.date_paiement.strftime('%d/%m/%Y') if p.date_paiement else '-' }}</strong></td>
+                            <td>{{ p.numero_facture }}</td>
+                            <td>{{ p.nom_client }}</td>
+                            <td><span style="background: #e5e8e8; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">{{ p.mode_paiement }}</span></td>
+                            <td style="font-weight: bold; color: #27ae60; text-align: right;">+ {{ p.montant|int }} FCFA</td>
+                            <td><span style="color: #2980b9; font-weight: bold;">@{{ p.nom_operateur }}</span></td>
+                            <td class="print-hide" style="text-align: center; white-space: nowrap;">
+                                <a href="{{ url_for('generer_facture_pdf', id_facture=p.id_facture) }}" target="_blank" class="btn-back" style="background:#2e86c1; padding: 4px 8px; font-size: 11px; margin-right: 2px;">A4</a>
+                                <a href="{{ url_for('generer_facture_pdf_a5', id_facture=p.id_facture) }}" target="_blank" class="btn-back" style="background:#f39c12; padding: 4px 8px; font-size: 11px; margin-right: 2px;">A5</a>
+                                <a href="{{ url_for('generer_recu_ticket_80mm', id_paiement=p.id_paiement) }}" target="_blank" class="btn-back" style="background:#2ecc71; padding: 4px 8px; font-size: 11px;">Ticket</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #7f8c8d; padding: 15px; font-weight: bold; background: #fafafa;">ℹ Aucun flux de trésorerie entrant répertorié.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- BARRE GRAPHIQUE DE PAGINATION NATIVE SÉCURISÉE SANS ERREUR DE CROCHET -->
+    <div class="pagination-block print-hide">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('gestion_paiements_page', page=pagination.prev_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_client=client_sel) }}" class="pagination-btn">« Précédent</a>
+        {% else %}
+            <span class="pagination-btn disabled">« Précédent</span>
+        {% endif %}
+
+        <span style="font-size: 13px; color: #7f8c8d; margin: 0 10px;">Page <strong>{{ pagination.page }}</strong> / {{ pagination.pages }} ({{ pagination.total }} fiches encaissées)</span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('gestion_paiements_page', page=pagination.next_num, filter_mois=mois_sel, filter_annee=annee_sel, filter_client=client_sel) }}" class="pagination-btn">Suivant »</a>
+        {% else %}
+            <span class="pagination-btn disabled">Suivant »</span>
+        {% endif %}
+    </div>
+
+</div> <!-- Fin du container global -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var dateInput = document.getElementById('date_paiement');
+        if (dateInput && !dateInput.value) {
+            // Fixation propre et étanche du format ISO AAAA-MM-JJ sans troncature
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guichet des Ventes &amp; Facturation - PROMAS</title>
+<style>
+/* STYLES DE BASE STRUCTURAUX (COMMUNS PC ET MOBILE) */
+* { box-sizing: border-box; }
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background-color: #f4f6f9; 
+    color: #333; 
+    margin: 0; 
+    padding: 20px; 
+}
+.container { 
+    max-width: 1200px; 
+    margin: 20px auto; 
+    background: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06); 
+}
+.header-block { 
+    border-bottom: 2px solid #2e86c1; 
+    padding-bottom: 12px; 
+    margin-bottom: 25px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+h2, h3 { color: #1e2229; margin: 0; font-size: 22px; }
+.btn-back { 
+    background-color: #7f8c8d; 
+    color: white; 
+    padding: 8px 15px; 
+    text-decoration: none; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    font-weight: bold; 
+}
+.btn-back:hover { background-color: #6c7a7d; }
+
+/* Grille Formulaire Ordinateur par défaut */
+.form-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; 
+    background: #f8f9fa; 
+    padding: 20px; 
+    border-radius: 6px; 
+    border: 1px solid #e6e6e6; 
+    margin-bottom: 30px; 
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+label { font-weight: bold; font-size: 13px; color: #2c3e50; }
+input, select, textarea { 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    font-size: 14px; 
+    box-sizing: border-box; 
+    background: white; 
+    width: 100%;
+}
+
+.btn-submit { 
+    background-color: #2e86c1; 
+    color: white; 
+    padding: 12px; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-size: 15px; 
+    font-weight: bold; 
+    grid-column: span 3; 
+    transition: background 0.2s; 
+}
+.btn-submit:hover { background-color: #21618c; }
+
+/* Spécifications Tableaux PC par défaut */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    background: white; 
+    font-size: 13px; 
+    table-layout: auto !important; 
+}
+th, td { 
+    padding: 8px 12px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+    vertical-align: middle; 
+    white-space: nowrap !important; 
+}
+th { background-color: #1e2229; color: white; font-weight: bold; }
+tr:hover { background-color: #f1f4f6; }
+
+.alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; }
+.alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+/* DESIGN DE LA PAGINATION CENTRALISÉE ORDINATEUR */
+.pagination-container { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 6px; 
+    margin: 30px auto 15px auto; 
+    padding: 10px; 
+    width: 100%; 
+}
+.pagination-link, .pagination-active, .pagination-disabled {
+    padding: 8px 14px;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #cfd9db;
+    text-decoration: none;
+    display: inline-block;
+}
+.pagination-link { background-color: #ffffff; color: #1e2229; }
+.pagination-link:hover { background-color: #2e86c1; color: white; border-color: #2e86c1; }
+.pagination-active { background-color: #1e2229; color: white; border-color: #1e2229; }
+.pagination-disabled { background-color: #f8f9fa; color: #bdc3c7; border-color: #e6e6e6; cursor: not-allowed; }
+
+/* ========================================================
+   2. INFRASTRUCTURE ÉTANCHE ORDINATEURS (> 768px)
+   ======================================================== */
+@media screen and (min-width: 769px) {
+    .form-grid { grid-template-columns: repeat(3, 1fr) !important; }
+}
+
+/* ========================================================
+   3. CONFIGURATION RESPONSIVE ÉTANCHE POUR MOBILE (<= 768px)
+   ======================================================== */
+@media screen and (max-width: 768px) {
+    body { padding: 10px !important; }
+    
+    /* Sécurisation extensible du conteneur blanc global */
+    .container { 
+        padding: 15px !important; 
+        margin: 5px auto !important; 
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    
+    /* Bloc en-tête horizontal aligné verticalement */
+    .header-block {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+    .btn-back {
+        width: 100% !important;
+        text-align: center !important;
+        display: block !important;
+    }
+
+    /* Traitement fluide des titres longs */
+    h2, h3, .container h2, .container h3 {
+        font-size: 16px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Force le formulaire en grille sur 1 seule colonne propre */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 15px !important;
+        width: 100% !important;
+    }
+    .form-group {
+        grid-column: span 1 !important;
+        width: 100% !important;
+    }
+    input, select, textarea, .btn-submit, button {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        height: auto !important;
+        min-height: 44px !important;
+    }
+
+    /* Zone de filtrage et recherche de ventes mobile */
+    .filter-print-zone, div[style*="background: #eef2f5"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 15px !important;
+    }
+    div[style*="background: #eef2f5"] form, .filter-print-zone form {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    div[style*="background: #eef2f5"] select, .filter-print-zone button {
+        width: 100% !important;
+        margin: 0 !important;
+        height: 42px !important;
+    }
+
+    /* ACTIVATION DE LA BARRE DE DÉFILEMENT HORIZONTALE SÉCURISÉE */
+    .table-responsive {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        display: block !important;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 15px;
+        -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100% !important; table-layout: auto !important; }
+    th, td { padding: 8px 10px !important; font-size: 12px !important; }
+
+    /* Zone de pagination élastique côte à côte (Numéros masqués) */
+    .pagination-container {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 25px 0 10px 0 !important;
+        box-sizing: border-box !important;
+    }
+    .pagination-container a, 
+    .pagination-container span {
+        display: none !important;
+    }
+    /* Maintient exclusivement Précédent et Suivant aux extrémités */
+    .pagination-container a:first-child, 
+    .pagination-container span:first-child,
+    .pagination-container a:last-child, 
+    .pagination-container span:last-child {
+        display: inline-block !important;
+        flex: 1 !important;
+        width: 48% !important;
+        max-width: 48% !important;
+        padding: 12px 6px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        border-radius: 6px !important;
+    }
+    .pagination-container a:first-child, .pagination-container a:last-child {
+        background-color: #2c3e50 !important; /* Fond bleu sombre pro validé */
+        color: white !important;
+        border: 1px solid #2c3e50 !important;
+    }
+    .pagination-container span:first-child, .pagination-container span:last-child {
+        background-color: #e9ecef !important;
+        color: #adb5bd !important;
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* RENDU IMPRESSION REGLEMENTAIRE */
+@media print {
+    .print-hide, form, .pagination-container, div[style*="background: #eef2f5"] { display: none !important; }
+    table { display: table !important; width: 100% !important; border: 1px solid #333 !important; border-collapse: collapse !important; }
+    th { background-color: #1e2229 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th, td { border: 1px solid #333 !important; padding: 6px 10px !important; font-size: 12px !important; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    
+    <!-- En-tête Écran -->
+    <div class="header-block">
+        <div>
+            <h2>🛒 Guichet de Vente Directe &amp; Facturation</h2>
+            <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 13px;">Émission de bons de livraison, gestion du panier et facturation client.</p>
+        </div>
+        <a href="/" class="btn-back print-hide">← Tableau de Bord</a>
+    </div>
+
+    <!-- Zone de notifications Flask -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- CONTENEUR DU FORMULAIRE DE TRANSACTION -->
+    <form action="{{ url_for('suivi_ventes') }}" method="POST" id="venteForm" class="print-hide">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="id_client">Client Bénéficiaire * :</label>
+                <select name="id_client" id="id_client" required>
+                    <option value="" disabled selected>-- Sélectionner le client --</option>
+                    {% for c in clients %}
+                        <option value="{{ c.id_client }}">{{ c.nom }} ({{ c.telephone }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="id_produit">Article / Produit à ajouter * :</label>
+                <select id="id_produit" onchange="recupererPrixUnitaire()">
+                    <option value="" disabled selected>-- Choisir un produit --</option>
+                    {% for p in produits %}
+                        <option value="{{ p.id_produit }}" data-prix="{{ p.prix_vente|int }}">{{ p.designation }} (Dispo: {{ p.stock }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantite">Quantité à vendre * :</label>
+                <input type="number" id="quantite" min="1" placeholder="Ex: 10">
+            </div>
+            <div class="form-group">
+                <label for="prix_unitaire">Prix Unitaire Appliqué (FCFA) * :</label>
+                <input type="number" id="prix_unitaire" min="0" placeholder="0">
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <button type="button" onclick="ajouterAuPanier()" style="background-color: #2e86c1; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; height: 44px;">➕ Ajouter au Panier</button>
+            </div>
+        </div>
+
+        <!-- ZONE INTERACTIVE DU PANIER TEMPORAIRE -->
+        <h3 style="margin-top: 20px; font-size: 15px; border-left: 4px solid #2e86c1; padding-left: 10px;">📋 Contenu du Panier Commercial</h3>
+        <div class="table-responsive" style="margin-bottom: 20px;">
+            <table id="tableauPanier">
+                <thead>
+                    <tr style="background-color: #34495e; color: white;">
+                        <th>Désignation</th>
+                        <th>Quantité</th>
+                        <th>Prix Unitaire</th>
+                        <th>Montant Ligne</th>
+                        <th style="text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="corpsPanier">
+                    <tr id="panierVide">
+                        <td colspan="5" style="text-align: center; color: #7f8c8d; font-style: italic; padding: 15px;">Le panier est actuellement vide.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- OPTIONS DE FACTURATION ET VALIDATION -->
+        <div class="form-grid" style="border-top: 1px solid #ddd; padding-top: 20px;">
+            <div class="form-group">
+                <label for="montant_verse">Acompte / Montant Versé à la commande (FCFA) :</label>
+                <input type="number" name="montant_verse" id="montant_verse" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label for="mode_paiement">Mode de Règlement (si acompte > 0) :</label>
+                <select name="mode_paiement" id="mode_paiement">
+                    <option value="Espèces">Espèces</option>
+                    <option value="Wave">Wave</option>
+                    <option value="Orange Money">Orange Money</option>
+                    <option value="Chèque">Chèque</option>
+                </select>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+                <input type="hidden" name="panier_json" id="panier_json">
+                <button type="submit" class="btn-submit" onclick="preparerSoumission(event)">💾 Valider et Enregistrer la Vente</button>
+            </div>
+        </div>
+    </form>
+
+    <h3 style="margin-top: 30px; margin-bottom: 10px; color: #1e2229;">📋 Journal Historique des Ventes Émises</h3>
+
+    <!-- PROTECTEUR RESPONSIVE POUR LE TABLEAU DES VENTES PROMAS -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Facture</th>
+                    <th>Date Vente</th>
+                    <th>Client</th>
+                    <th>Montant Total</th>
+                    <th>Avance Versée</th>
+                    <th>Reste à Payer</th>
+                    <th>Statut</th>
+                    <th>Opérateur</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if ventes %}
+                    {% for v in ventes %}
+                        <tr>
+                            <td><strong>{{ v.numero_facture }}</strong></td>
+                            <td>{{ v.date_vente.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ v.nom_client }}</td>
+                            <td style="font-weight: bold;">{{ v.montant_total|int }} FCFA</td>
+                            <td style="color: #27ae60;">{{ v.montant_paye|int }} FCFA</td>
+                            <td style="font-weight: bold; color: #c0392b;">{{ (v.montant_total - v.montant_paye)|int }} FCFA</td>
+                            <td>
+                                {% if v.montant_paye >= v.montant_total %}
+                                    <span style="background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">SOLDÉE</span>
+                                {% else %}
+                                    <span style="background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">CRÉANCE</span>
+                                {% endif %}
+                            </td>
+                            <td><span style="color: #2980b9; font-weight: bold;">@{{ v.operateur }}</span></td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 25px; font-weight: bold; background: #fafafa;">ℹ️ Aucune transaction enregistrée dans le journal des ventes.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ZONE DE PAGINATION ÉLASTIQUE -->
+    <div class="pagination-container print-hide">
+        {% if pagination and pagination.has_prev %}
+            <a href="{{ url_for('suivi_ventes', page=pagination.prev_num) }}" class="pagination-link">« Précédent</a>
+        {% else %}
+            <span class="pagination-disabled">« Précédent</span>
+        {% endif %}
+        
+        {% if pagination and pagination.pages > 1 %}
+            <span class="pagination-active">{{ pagination.page }}</span>
+        {% else %}
+            <span class="pagination-active">1</span>
+        {% endif %}
+        
+        {% if pagination and pagination.has_next %}
+            <a href="{{ url_for('suivi_ventes', page=pagination.next_num) }}" class="pagination-link">Suivant »</a>
+        {% else %}
+            <span class="pagination-disabled">Suivant »</span>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// 1. INITIALISATION DE LA PAGE ET SYNCHRONISATION
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInput = document.getElementById('date_vente');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    remettreEcouteursDoublons();
+    
+    // Met à jour automatiquement les zones de texte sur la feuille d'impression
+    if (document.getElementById('print_mois')) {
+        document.getElementById('print_mois').innerText = "{{ mois_sel }}";
+    }
+    if (document.getElementById('print_annee')) {
+        document.getElementById('print_annee').innerText = "{{ annee_sel }}";
+    }
+});
+
+function ajouterLignePanier() {
+    var conteneur = document.getElementById('panier-articles');
+    var premiereLigne = document.querySelector('.ligne-produit');
+    if (!premiereLigne) return;
+    
+    // On récupère la liste des produits depuis le premier menu déroulant
+    var selectHtml = premiereLigne.querySelector('select').innerHTML;
+    
+    // IMPORTANT : On crée un élément 'tr' (ligne de tableau) et non une 'div'
+    var nouvelleLigne = document.createElement('tr');
+    nouvelleLigne.className = 'ligne-produit';
+    nouvelleLigne.style.borderBottom = '1px solid #e6ebeb';
+    
+    // On injecte les cellules 'td' pour que l'alignement reste parfaitement droit sous les en-têtes
+    nouvelleLigne.innerHTML = `
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e6ebeb;">
+            <select name="id_produit[]" onchange="verifierDoublonPanier(this)" required style="width: 100%; padding: 4px 8px; height: 30px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; background: white; font-size: 13px;">
+                ${selectHtml}
+            </select>
+        </td>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e6ebeb;">
+            <input type="number" name="quantite[]" min="0.01" step="any" placeholder="0" required style="width: 100%; padding: 4px 8px; height: 30px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;">
+        </td>
+        <td style="padding: 6px 10px; border-bottom: 1px solid #e6ebeb;">
+            <input type="number" name="prix_unitaire[]" min="0" placeholder="0" required style="width: 100%; padding: 4px 8px; height: 30px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;">
+        </td>
+        <td style="padding: 6px 10px; text-align: center; border-bottom: 1px solid #e6ebeb;">
+            <button type="button" style="background-color: #e74c3c; color: white; border: none; padding: 4px 10px; height: 30px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; justify-content: center;" title="Supprimer" onclick="supprimerArticleDuPanier(this)">❌</button>
+        </td>
+    `;
+    
+    conteneur.appendChild(nouvelleLigne);
+    remettreEcouteursDoublons();
+}
+
+
+// 3. SÉCURITÉ ANTI-DOUBLON DANS LE PANIER
+function verifierDoublonPanier(selectModifie) {
+    var tousLesSelects = document.querySelectorAll('select[name="id_produit[]"]');
+    var valeurSelectionnee = selectModifie.value;
+    if (!valeurSelectionnee) return;
+    
+    var compteur = 0;
+    tousLesSelects.forEach(function(select) {
+        if (select.value === valeurSelectionnee) compteur++;
+    });
+    
+    if (compteur > 1) {
+        alert("Cet article est déjà présent dans votre panier ! Veuillez ajuster directement la ligne existante.");
+        selectModifie.value = "";
+    }
+}
+
+function remettreEcouteursDoublons() {
+    var tousLesSelects = document.querySelectorAll('select[name="id_produit[]"]');
+    tousLesSelects.forEach(function(select) {
+        select.setAttribute('onchange', 'verifierDoublonPanier(this)');
+    });
+}
+
+// 4. SUPPRIMER UN ARTICLE DU PANIER
+function supprimerArticleDuPanier(bouton) {
+    var lignesRestantes = document.querySelectorAll('.ligne-produit').length;
+    if (lignesRestantes > 1) {
+        var ligne = bouton.closest('.ligne-produit');
+        if (ligne) ligne.remove();
+    } else {
+        alert("Le panier doit contenir au moins un article.");
+    }
+}
+
+// 5. EXPORTATION VERS EXCEL PROPRE (SANS FCFA, SANS ESPACE, AVEC VIRGULES)
+function exporterVersExcel() {
+    var table = document.querySelector("table");
+    if (!table) return;
+    
+    var csv = [];
+    var rows = table.querySelectorAll("tr");
+    
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        if (row.style.display === "none") continue;
+        
+        var cols = row.querySelectorAll("th, td");
+        var rowData = [];
+        
+        // Extraction des 8 premières colonnes d'informations
+        for (var j = 0; j < 8; j++) {
+            if (cols[j]) {
+                var text = cols[j].innerText.trim();
+                
+                if (i > 0 && j >= 3 && j <= 6) {
+                    text = text.replace(/FCFA/gi, "")
+                               .replace(/\+/g, "")
+                               .replace(/\s+/g, "")
+                               .trim()
+                               .replace('.', ',');
+                }
+                text = text.replace(/"/g, '""');
+                rowData.push('"' + text + '"');
+            }
+        }
+        csv.push(rowData.join(";"));
+    }
+    
+    var csvString = "\uFEFF" + csv.join("\n");
+    var blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    var link = document.createElement("a");
+    if (link.download !== undefined) {
+        var url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "registre_ventes_filtre.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}function annulerToutLePanier() {
+    if (confirm("Êtes-vous sûr de vouloir vider le panier et réinitialiser le formulaire ?")) {
+        // 1. Vide les choix du client et de la date
+        document.getElementById('venteForm').reset();
+        
+        // 2. Récupère le tableau du panier
+        var conteneur = document.getElementById('panier-articles');
+        var lignes = conteneur.getElementsByTagName('tr');
+        
+        // 3. Supprime toutes les lignes en partant du bas, sauf la toute première
+        while (lignes.length > 1) {
+            lignes[lignes.length - 1].remove();
+        }
+        
+        // 4. Remet la date du jour par défaut
+        var dateInput = document.getElementById('date_vente');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    }
+}
+
+</script>
+</body>
+</html>
