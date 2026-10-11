@@ -1,6 +1,7 @@
 import os
 import io
 from datetime import datetime, timedelta, date
+from dotenv import load_dotenv 
 import pandas as pd
 import calendar
 from random import randint
@@ -17,7 +18,7 @@ from reportlab.lib.pagesizes import inch
 from sqlalchemy.orm import joinedload
 
 app = Flask(__name__)
-
+load_dotenv()
 # --- CONFIGURATION POSTGRESQL NEON ---
 database_url = os.environ.get ("DATABASE_URL")
 
@@ -728,13 +729,12 @@ def ajouter_utilisateur():
 
 
 # --- CONFIGURATION DE L'ENTREPRISE (EN-TÊTES FACTURES) ---
-
 @app.route('/modifier_configuration', methods=['GET', 'POST'])
 def modifier_configuration():
     # 1. SÉCURITÉ : Vérification de la connexion de l'utilisateur
     if 'user_id' not in session:
         return redirect(url_for('connexion_get'))
-        
+    
     try:
         # 2. ACCÈS EXCLUSIF : Validation stricte de l'identité de l'administrateur
         user_connecte = Users.query.get(session['user_id'])
@@ -751,12 +751,12 @@ def modifier_configuration():
         if hasattr(user_connecte, 'EstActif') and not user_connecte.EstActif:
             flash("❌ Accès Refusé : Votre compte super-administratif est désactivé.", "error")
             return redirect(url_for('deconnexion'))
-
+            
         # Extraction de la configuration existante
         config = Configuration.query.first()
-
+        
         # =================================================================
-        # TRITEMENT DU FORMULAIRE (MÉTHODE POST)
+        # TRAITEMENT DU FORMULAIRE (MÉTHODE POST)
         # =================================================================
         if request.method == 'POST':
             raison_sociale = request.form.get('raison_sociale', '').strip()
@@ -773,15 +773,22 @@ def modifier_configuration():
             if file and file.filename != '':
                 if allowed_file(file.filename):
                     if not os.path.exists(UPLOAD_FOLDER):
-                        os.makedirs(UPLOAD_FOLDER)
-                    # Sécurisation du nom de fichier pour éviter les injections de chemin
-                    filename = secure_filename(f"logo_promas_{secure_filename(file.filename)}")
-                    file.save(os.path.join(UPLOAD_FOLDER, filename))
-                    logo_filename = os.path.join(UPLOAD_FOLDER, filename)
+                        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                        
+                    # Sécurisation du nom de fichier unique
+                    nom_fichier_propre = secure_filename(file.filename)
+                    filename = f"logo_promas_{nom_fichier_propre}"
+                    
+                    # CORRECTION ICI : Sauvegarde physique locale sur le serveur
+                    chemin_physique_disque = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(chemin_physique_disque)
+                    
+                    # CORRECTION ICI : Enregistrement du chemin internet relatif pour url_for
+                    logo_filename = f"uploads/{filename}"
                 else:
                     flash("❌ Format de fichier non supporté pour le logo (Extensions autorisées : PNG, JPG, JPEG, GIF).", "error")
-                    return render_template('modifier_configuration.html', config=config)
-
+                    return render_template('configuration.html', config=config)
+            
             # Si aucune configuration n'existe en base, on crée la première ligne
             if not config:
                 config = Configuration(
@@ -794,7 +801,7 @@ def modifier_configuration():
                     logo=logo_filename
                 )
                 db.session.add(config)
-                # 📝 Log d'audit pour le suivi de traçabilité créé précédemment
+                
                 if 'JournalSecurite' in globals():
                     log = JournalSecurite(
                         action_menee="CONFIGURATION INITIALISÉE",
@@ -819,11 +826,19 @@ def modifier_configuration():
                         id_cible=user_connecte.NumUser
                     )
                     db.session.add(log)
-
+            
             db.session.commit()
             flash("✔ Paramètres d'en-tête de l'entreprise mis à jour avec succès !", "success")
             return redirect(url_for('accueil_admin'))
-
+            
+        # =================================================================
+        # RENDU VISUEL DE LA PAGE (MÉTHODE GET)
+        # =================================================================
+        return render_template('configuration.html', config=config)
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"<h3>❌ Erreur lors du traitement de la configuration :</h3> <p>{str(e)}</p>"
         # =================================================================
         # RENDU VISUEL DE LA PAGE (MÉTHODE GET)
         # =================================================================
@@ -5851,12 +5866,13 @@ def obtenir_paiements_json(id_inv):
 #--------------------------------------------------------
 # APPLICATION SECURE INITIALIZATION & RUN
 # -------------------------------------------------------
-# Mettez ces lignes alignées tout à gauche (sans espace devant) :
-with app.app_context():
-    # Création initiale des tables dans Neon si elles n'existent pas.
-    db.create_all()
-
 if __name__ == "__main__":
+    with app.app_context():
+        # Création initiale des tables dans Neon si elles n'existent pas.
+        # NE PAS utiliser db.drop_all() en production
+        db.create_all()
+
+    # Compatible avec Render et avec l'exécution locale.
     port = int(os.environ.get("PORT", 5000))
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
     app.run(debug=debug, host="0.0.0.0", port=port)
